@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { buildAvatar, animateAvatar, AVATAR_HEIGHT } from './avatar.js';
 
-export const PLAYER = { hw: 0.45, h: AVATAR_HEIGHT, speed: 9, jump: 12.5, gravity: 32 };
+export const PLAYER = { hw: 0.45, h: AVATAR_HEIGHT, speed: 9, jump: 12.5, jump2: 11, gravity: 32, maxJumps: 2 }; // maxJumps 2 = dubbelhopp
 export const isTouch = matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0;
 
 // ---------- Ljud (små pip med WebAudio) ----------
@@ -40,7 +40,7 @@ export class Input {
     this._onKey = (e) => {
       if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
       const k = e.key.toLowerCase();
-      if (e.type === 'keydown') { this.keys.add(k); if (k === ' ' || k === 'arrowup' && false) this.jumpQueued = true; if ([' ', 'arrowup', 'arrowdown'].includes(k)) e.preventDefault(); }
+      if (e.type === 'keydown') { if (k === ' ' && !this.keys.has(' ')) this.jumpQueued = true; this.keys.add(k); if ([' ', 'arrowup', 'arrowdown'].includes(k)) e.preventDefault(); }
       else this.keys.delete(k);
     };
     addEventListener('keydown', this._onKey); addEventListener('keyup', this._onKey);
@@ -90,7 +90,7 @@ export class Input {
     return this.joy;
   }
   get jumpHeldNow() { return this.keys.has(' ') || this.jumpHeld; }
-  takeJump() { const j = this.jumpQueued || this.keys.has(' '); this.jumpQueued = false; return j; }
+  takeJump() { const j = this.jumpQueued; this.jumpQueued = false; return j; }
   takeLook() { const d = this.lookDelta; this.lookDelta = { x: 0, y: 0 }; return d; }
   takeClicks() { const c = this.clicks; this.clicks = []; return c; }
   dispose() {
@@ -210,6 +210,12 @@ export class Engine {
     setTimeout(() => { if (this.running) this.respawn(); }, 700);
   }
   _syncPlayer() { const p = this.player; p.mesh.position.copy(p.pos); p.mesh.rotation.y = p.facing; }
+  // Liten vit ring under fötterna vid dubbelhopp
+  _puff(pos) {
+    if (!this._puffGeo) { this._puffGeo = new THREE.RingGeometry(0.3, 0.7, 20); this._puffGeo.rotateX(-Math.PI / 2); }
+    const m = new THREE.Mesh(this._puffGeo, new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.8, side: THREE.DoubleSide }));
+    m.position.set(pos.x, pos.y + 0.05, pos.z); this.scene.add(m); (this.puffs ||= []).push({ m, t: 0 });
+  }
 
   start(update) {
     this.running = true; this.clock.start(); this._update = update;
@@ -227,6 +233,8 @@ export class Engine {
     const dt = Math.min(0.05, this.clock.getDelta()); this.time += dt;
     this._moveMovers(dt);
     if (this.player && !this.freeze && !this.player.dead) this._physics(dt);
+    if (this.puffs) for (const q of this.puffs) { q.t += dt; q.m.scale.setScalar(1 + q.t * 4); q.m.material.opacity = 0.8 * (1 - q.t / 0.35); if (q.t > 0.35) { this.scene.remove(q.m); q.m.material.dispose(); } }
+    if (this.puffs) this.puffs = this.puffs.filter(q => q.t <= 0.35);
     for (const c of this.coins) if (!c.taken) { c.mesh.rotation.y += dt * 3; c.mesh.position.y = c.y + Math.sin(this.time * 3 + c.x) * 0.15; }
     this._update?.(dt);
     this._camera(dt);
@@ -255,7 +263,12 @@ export class Engine {
     const speed = PLAYER.speed;
     p.vel.x = dx * speed; p.vel.z = dz * speed;
     p.vel.y -= PLAYER.gravity * dt;
-    if (inp.takeJump() && p.grounded) { p.vel.y = PLAYER.jump; p.grounded = false; p.standOn = null; sfx.jump(); }
+    if (p.grounded) p.jumps = 0;
+    if (inp.takeJump() && (p.grounded || (p.jumps ?? 0) < PLAYER.maxJumps)) {
+      if (!p.grounded && !p.jumps) p.jumps = 1; // ramlade av kanten utan att hoppa: räkna som ett använt hopp
+      p.vel.y = p.jumps ? PLAYER.jump2 : PLAYER.jump; p.jumps = (p.jumps || 0) + 1; p.grounded = false; p.standOn = null; sfx.jump();
+      if (p.jumps > 1) this._puff(p.pos);
+    }
     // X
     p.pos.x += p.vel.x * dt;
     for (const b of this.boxes) if (b.type !== 'coin' && this._overlap(b, p.pos)) { p.pos.x = p.vel.x > 0 ? b.min.x - hw - 0.001 : b.max.x + hw + 0.001; if (b.type === 'lava') return this.die(); }
