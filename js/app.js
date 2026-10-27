@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { store, SKIN_COLORS, CLOTH_COLORS, FACES, HATS } from './store.js';
 import { buildAvatar, animateAvatar } from './avatar.js';
-import { hud, fmtTime } from './engine.js';
+import { hud, fmtTime, isTouch } from './engine.js';
 
 const GAMES = [
   { id: 'obby', title: 'Hinderbanan', emoji: '🏃', bg: 'linear-gradient(135deg,#ff9a3c,#ff3c6e)', rating: 96, desc: 'Hoppa mellan plattformar, akta dig för lavan och ta dig till målflaggan. Gröna plattformar sparar var du är. Klara banan snabbt för att slå ditt rekord!',
@@ -12,8 +12,9 @@ const GAMES = [
   { id: 'build', title: 'Bygg din värld', emoji: '🧱', bg: 'linear-gradient(135deg,#43e97b,#38f9d7)', rating: 98, desc: 'Bygg vad du vill med färgade block: hus, torn, labyrinter. Din värld sparas, så du kan fortsätta nästa gång. Tryck "Spela i världen" för att gå runt i det du byggt!',
     tips: ['Högerklick tar bort block', 'Du kan hoppa upp på ett block i taget'], load: () => import('./games/build.js') },
 ];
-const isTouch = matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window;
 const app = document.getElementById('app');
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
 const esc = (s) => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const faceEmoji = (p) => FACES.find(f => f.id === p.avatar.face)?.emoji || '🙂';
 function toast(msg) { const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 2500); }
@@ -50,6 +51,7 @@ function viewPlayers() {
       ${store.players.map(p => `<button class="player-card" data-id="${p.id}"><span class="face" style="background:${p.avatar.skin}">${faceEmoji(p)}</span>${esc(p.name)}<div class="sub" style="font-size:12px;font-weight:600"><span class="coin-icon" style="width:11px;height:11px"></span> ${p.coins}</div></button>`).join('')}
       <button class="player-card new" id="new-player"><span class="face" style="background:#eee">＋</span>Ny spelare</button>
     </div>
+    ${isIOS && !standalone ? `<p class="sub tip">📱 Tips för iPad: tryck på <b>Dela</b> <span style="font-size:16px">⎋</span> i Safari och välj <b>Lägg till på hemskärmen</b>. Då öppnas MiniBlox i helskärm som en app.</p>` : ''}
     <div id="new-form" hidden><input class="input" id="new-name" maxlength="14" placeholder="Vad heter du?" autocomplete="off" /><div style="margin-top:12px"><button class="btn green" id="new-ok">Börja spela</button></div></div>
   </div>`;
   app.querySelectorAll('.player-card[data-id]').forEach(b => b.onclick = () => { store.select(b.dataset.id); location.hash = '#/'; });

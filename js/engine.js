@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { buildAvatar, animateAvatar, AVATAR_HEIGHT } from './avatar.js';
 
 export const PLAYER = { hw: 0.45, h: AVATAR_HEIGHT, speed: 9, jump: 12.5, gravity: 32 };
-const isTouch = matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window;
+export const isTouch = matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0;
 
 // ---------- Ljud (små pip med WebAudio) ----------
 let actx = null;
@@ -17,6 +17,11 @@ function tone(freq, dur = 0.12, type = 'square', vol = 0.08, when = 0) {
     o.connect(g).connect(actx.destination); o.start(actx.currentTime + when); o.stop(actx.currentTime + when + dur + 0.02);
   } catch { /* ljud av */ }
 }
+// iPad/iPhone: ljudet måste låsas upp av en tryckning. Skapa och väck AudioContext vid första pekningen.
+function unlockAudio() {
+  try { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); if (actx.state === 'suspended') actx.resume(); } catch { /* ljud av */ }
+}
+addEventListener('pointerdown', unlockAudio, { passive: true }); addEventListener('touchstart', unlockAudio, { passive: true }); addEventListener('keydown', unlockAudio);
 export const sfx = {
   coin() { tone(880, 0.08, 'square'); tone(1320, 0.14, 'square', 0.08, 0.07); },
   jump() { tone(300, 0.1, 'triangle', 0.06); },
@@ -45,7 +50,7 @@ export class Input {
     this._down = (e) => {
       if (e.target !== canvas) return;
       canvas.setPointerCapture?.(e.pointerId);
-      const left = isTouch && e.pointerType === 'touch' && e.clientX < innerWidth * 0.45 && e.clientY > innerHeight * 0.45;
+      const left = isTouch && e.clientX < innerWidth * 0.45 && e.clientY > innerHeight * 0.4;
       pointers.set(e.pointerId, { x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, moved: 0, joy: left, t: performance.now(), button: e.button, shift: e.shiftKey });
       if (left) { this.joyOrigin = { x: e.clientX, y: e.clientY }; this._showJoy(e.clientX, e.clientY); }
     };
@@ -106,7 +111,10 @@ export const hud = {
     const c = this.el('hud-center'); c.innerHTML = html; clearTimeout(this._ct);
     if (ms) this._ct = setTimeout(() => { if (c.innerHTML === html) c.innerHTML = ''; }, ms);
   },
-  bottom(t) { this.el('hud-bottom').textContent = t; },
+  bottom(t) {
+    const b = this.el('hud-bottom'); b.textContent = t; b.style.opacity = '';
+    clearTimeout(this._bt); if (isTouch && t) this._bt = setTimeout(() => { b.style.opacity = 0; }, 6000); // dölj tipset så det inte ligger över joysticken
+  },
   panel(html) { const p = this.el('hud-panel'); if (html == null) { p.hidden = true; p.innerHTML = ''; } else { p.hidden = false; p.innerHTML = html; } return p; },
   tools(html) {
     let t = document.querySelector('.hud-tools');
