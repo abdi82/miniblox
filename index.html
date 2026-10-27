@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="theme-color" content="#111111" />
+  <title>MiniBlox</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='6' y='6' width='52' height='52' rx='10' fill='%23111'/%3E%3Crect x='20' y='20' width='24' height='24' rx='3' fill='%23fff' transform='rotate(12 32 32)'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+  <script type="importmap">
+    { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }
+  </script>
+</head>
+<body>
+  <div id="app"></div>
+  <div id="game" hidden>
+    <div id="game-canvas"></div>
+    <div id="hud">
+      <div class="hud-top">
+        <button id="hud-exit" class="hud-btn" type="button">‹ Lobby</button>
+        <div id="hud-title" class="hud-title"></div>
+        <div id="hud-right" class="hud-right"></div>
+      </div>
+      <div id="hud-center" class="hud-center"></div>
+      <div id="hud-bottom" class="hud-bottom"></div>
+      <div id="hud-panel" class="hud-panel" hidden></div>
+    </div>
+    <div id="touch" hidden>
+      <div id="joystick"><div id="joystick-knob"></div></div>
+      <button id="btn-jump" type="button">Hoppa</button>
+    </div>
+  </div>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
