@@ -107,8 +107,13 @@ export function buildAvatar(cfg) {
 }
 
 // Enkel gånganimation
-export function animateAvatar(root, t, moving, airborne) {
+export function animateAvatar(root, t, moving, airborne, flying = false) {
   const { legL, legR, armL, armR, body } = root.userData;
+  if (flying) { // superman: armarna rakt fram, benen bakåt, kroppen lutad
+    armL.rotation.x = armR.rotation.x = -3.0; legL.rotation.x = legR.rotation.x = 0.4; body.rotation.x = 0.9; body.position.y = 1.2 + Math.sin(t * 4) * 0.15;
+    return;
+  }
+  body.rotation.x = 0;
   if (airborne) {
     armL.rotation.x = armR.rotation.x = -2.6; legL.rotation.x = 0.3; legR.rotation.x = -0.3; body.position.y = 0;
     return;

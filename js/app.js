@@ -6,7 +6,7 @@ import { hud, fmtTime, isTouch } from './engine.js';
 
 const GAMES = [
   { id: 'obby', title: 'Hinderbanan', emoji: '🏃', bg: 'linear-gradient(135deg,#ff9a3c,#ff3c6e)', rating: 96, desc: 'Hoppa mellan plattformar, akta dig för lavan och ta dig till målflaggan. Gröna plattformar sparar var du är. Klara banan snabbt för att slå ditt rekord!',
-    tips: ['Dubbelhopp: tryck hoppa en gång till i luften', 'Första gången du klarar banan får du 60 mynt', 'Färre dödar = fler mynt'], load: () => import('./games/obby.js') },
+    tips: ['Dubbelhopp: tryck hoppa en gång till i luften', 'Trippelhopp: tryck en tredje gång så flyger du i 10 sekunder (nedräkning uppe till vänster)', 'Första gången du klarar banan får du 60 mynt', 'Färre dödar = fler mynt'], load: () => import('./games/obby.js') },
   { id: 'coins', title: 'Myntjakten', emoji: '🪙', bg: 'linear-gradient(135deg,#ffd200,#f7971e)', rating: 94, desc: 'Samla så många mynt du hinner på 60 sekunder. Mynten finns på marken, på lådor och högst upp i tornen. Varje mynt du samlar blir dina!',
     tips: ['Alla mynt = 25 bonusmynt', 'Tornen har två mynt på toppen'], load: () => import('./games/coins.js') },
   { id: 'build', title: 'Bygg din värld', emoji: '🧱', bg: 'linear-gradient(135deg,#43e97b,#38f9d7)', rating: 98, desc: 'Bygg vad du vill med färgade block: hus, torn, labyrinter. Din värld sparas, så du kan fortsätta nästa gång. Tryck "Spela i världen" för att gå runt i det du byggt!',
@@ -86,7 +86,7 @@ function viewGame(id) {
       </div>
     </div></div>
     <h2>Om spelet</h2><div class="desc">${g.desc}<ul>${g.tips.map(t => `<li>${t}</li>`).join('')}</ul>
-    <b>Så spelar du:</b> ${isTouch ? 'Vänster sida av skärmen: gå. Höger sida: titta runt. Knappen "Hoppa": hoppa, tryck igen i luften för dubbelhopp.' : 'WASD eller piltangenter: gå. Mellanslag: hoppa, tryck igen i luften för dubbelhopp. Dra med musen: titta runt.'}</div>`);
+    <b>Så spelar du:</b> ${isTouch ? 'Vänster sida av skärmen: gå. Höger sida: titta runt. Knappen "Hoppa": hoppa, tryck igen i luften för dubbelhopp, och en tredje gång för att flyga i 10 sekunder.' : 'WASD eller piltangenter: gå. Mellanslag: hoppa, tryck igen i luften för dubbelhopp, och en tredje gång för att flyga i 10 sekunder. Dra med musen: titta runt.'}</div>`);
   app.querySelector('#play').onclick = () => play(g);
 }
 

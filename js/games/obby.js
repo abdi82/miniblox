@@ -47,8 +47,8 @@ export function start(ctx) {
   const p = e.spawnPlayer(ctx.player.avatar, e.spawnAt);
   let t = 0, deaths = 0, done = false, cps = 0;
   hud.title('Hinderbanan');
-  hud.bottom(ctx.touch ? 'Vänster: gå · Höger: titta · Hoppa två gånger = dubbelhopp!' : 'WASD: gå · Mellanslag: hoppa (två gånger = dubbelhopp) · Dra med musen: titta');
-  hud.center('<div>Spring till flaggan!</div><div class="small">Tryck hoppa två gånger för dubbelhopp · Grön plattform = kontrollpunkt</div>', 2500);
+  hud.bottom(ctx.touch ? 'Vänster: gå · Höger: titta · 2 hopp = dubbelhopp · 3 hopp = flyga!' : 'WASD: gå · Mellanslag: hoppa · 2 = dubbelhopp · 3 = flyga i 10 s · Dra med musen: titta');
+  hud.center('<div>Spring till flaggan!</div><div class="small">2 hopp = dubbelhopp · 3 hopp = flyga i 10 sekunder</div>', 2500);
   const refresh = () => hud.right(`⏱ ${fmtTime(t)} <span style="opacity:.8">💀 ${deaths}</span>`);
   e.on('die', () => { deaths++; refresh(); hud.center('<div style="color:#ff5252">Aj! Försök igen</div>', 800); });
   e.on('checkpoint', () => { cps++; hud.center('<div style="color:#69f0ae">Kontrollpunkt!</div>', 1000); });

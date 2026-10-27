@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { buildAvatar, animateAvatar, AVATAR_HEIGHT } from './avatar.js';
 
-export const PLAYER = { hw: 0.45, h: AVATAR_HEIGHT, speed: 9, jump: 12.5, jump2: 11, gravity: 32, maxJumps: 2 }; // maxJumps 2 = dubbelhopp
+export const PLAYER = { hw: 0.45, h: AVATAR_HEIGHT, speed: 9, jump: 12.5, jump2: 11, gravity: 32, maxJumps: 2, flyTime: 10, flyUp: 7, flySink: -2.5 }; // 2 hopp = dubbelhopp, tredje tryck = flyga
 export const isTouch = matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0;
 
 // ---------- Ljud (små pip med WebAudio) ----------
@@ -29,6 +29,7 @@ export const sfx = {
   check() { tone(523, 0.1, 'triangle'); tone(659, 0.1, 'triangle', 0.08, 0.1); tone(784, 0.2, 'triangle', 0.08, 0.2); },
   win() { [523, 659, 784, 1046].forEach((f, i) => tone(f, 0.18, 'triangle', 0.09, i * 0.13)); },
   place() { tone(600, 0.05, 'square', 0.05); },
+  fly() { [440, 554, 659, 880, 1109].forEach((f, i) => tone(f, 0.12, 'triangle', 0.08, i * 0.06)); },
   remove() { tone(250, 0.07, 'square', 0.05); },
 };
 
@@ -202,7 +203,7 @@ export class Engine {
     this._syncPlayer(); return this.player;
   }
   respawn() {
-    const p = this.player; p.pos.copy(p.spawn); p.vel.set(0, 0, 0); p.dead = false; p.mesh.visible = true; this._syncPlayer();
+    const p = this.player; p.pos.copy(p.spawn); p.vel.set(0, 0, 0); p.dead = false; p.flying = 0; p.jumps = 0; this._flyHud(null); p.mesh.visible = true; this._syncPlayer();
   }
   die() {
     const p = this.player; if (p.dead) return; p.dead = true; sfx.die(); p.mesh.visible = false;
@@ -210,6 +211,7 @@ export class Engine {
     setTimeout(() => { if (this.running) this.respawn(); }, 700);
   }
   _syncPlayer() { const p = this.player; p.mesh.position.copy(p.pos); p.mesh.rotation.y = p.facing; }
+  _flyHud(left) { const el = document.getElementById('hud-fly'); if (left == null) el.hidden = true; else { el.hidden = false; el.textContent = `✈️ ${Math.ceil(left)} s`; } }
   // Liten vit ring under fötterna vid dubbelhopp
   _puff(pos) {
     if (!this._puffGeo) { this._puffGeo = new THREE.RingGeometry(0.3, 0.7, 20); this._puffGeo.rotateX(-Math.PI / 2); }
@@ -262,12 +264,22 @@ export class Engine {
     if (moving) { const l = Math.hypot(dx, dz); dx /= l; dz /= l; const str = Math.min(1, Math.hypot(mv.x, mv.y)); dx *= str; dz *= str; p.facing = Math.atan2(dx, dz); }
     const speed = PLAYER.speed;
     p.vel.x = dx * speed; p.vel.z = dz * speed;
-    p.vel.y -= PLAYER.gravity * dt;
-    if (p.grounded) p.jumps = 0;
-    if (inp.takeJump() && (p.grounded || (p.jumps ?? 0) < PLAYER.maxJumps)) {
+    if (!(p.flying > 0)) p.vel.y -= PLAYER.gravity * dt;
+    if (p.grounded) { p.jumps = 0; p.flewThisAir = false; }
+    const pressed = inp.takeJump();
+    if (p.flying > 0) {
+      // Flygläge: håll hoppa för att stiga, släpp för att sjunka sakta. Rörelsen går lite fortare.
+      p.flying -= dt; p.vel.y = inp.jumpHeldNow ? PLAYER.flyUp : PLAYER.flySink; p.vel.x *= 1.3; p.vel.z *= 1.3;
+      this._flyHud(p.flying);
+      if (p.flying <= 0) { p.flying = 0; this._flyHud(null); hud.center('<div class="small">Flygtiden är slut!</div>', 1200); }
+    } else if (pressed && (p.grounded || (p.jumps ?? 0) < PLAYER.maxJumps)) {
       if (!p.grounded && !p.jumps) p.jumps = 1; // ramlade av kanten utan att hoppa: räkna som ett använt hopp
       p.vel.y = p.jumps ? PLAYER.jump2 : PLAYER.jump; p.jumps = (p.jumps || 0) + 1; p.grounded = false; p.standOn = null; sfx.jump();
       if (p.jumps > 1) this._puff(p.pos);
+    } else if (pressed && !p.grounded && !p.flewThisAir) {
+      // Tredje trycket i luften: flyg i 10 sekunder
+      p.flying = PLAYER.flyTime; p.flewThisAir = true; p.vel.y = PLAYER.flyUp; sfx.fly(); this._puff(p.pos);
+      hud.center('<div>✈️ Du flyger!</div><div class="small">Håll hoppa för att stiga</div>', 1500);
     }
     // X
     p.pos.x += p.vel.x * dt;
@@ -293,7 +305,7 @@ export class Engine {
     if (this.deathY != null && p.pos.y < this.deathY) return this.die();
     if (p.pos.y < -60) return this.die();
     this._syncPlayer();
-    animateAvatar(p.mesh, this.time, moving, !p.grounded);
+    animateAvatar(p.mesh, this.time, moving, !p.grounded, p.flying > 0);
   }
   _camera(dt) {
     const look = this.input.takeLook();
