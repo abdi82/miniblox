@@ -106,8 +106,41 @@ export function buildAvatar(cfg) {
   return root;
 }
 
+// Djur man kan bli i Hinderbanan. Varje djur har en superkraft (se stats).
+export const ANIMALS = [
+  { id: 'human', label: 'Jag själv', emoji: '🧍', desc: 'Vanlig figur. Dubbelhopp och 10 s flygning.', stats: {} },
+  { id: 'groda', label: 'Groda', emoji: '🐸', desc: 'Hoppar mycket högre!', stats: { jump: 1.35 } },
+  { id: 'gepard', label: 'Gepard', emoji: '🐆', desc: 'Springer supersnabbt!', stats: { speed: 1.4 } },
+  { id: 'orn', label: 'Örn', emoji: '🦅', desc: 'Flyger 20 sekunder och svävar om du håller hoppa.', stats: { flyTime: 20, glide: true } },
+  { id: 'kanin', label: 'Kanin', emoji: '🐇', desc: 'Tre hopp i luften!', stats: { maxJumps: 3 } },
+  { id: 'skoldpadda', label: 'Sköldpadda', emoji: '🐢', desc: 'Lavan bränner inte, men lite långsam.', stats: { speed: 0.8, lavaImmune: true } },
+];
+
+export function buildAnimal(kind, cfg) {
+  if (kind === 'human' || !kind) return buildAvatar(cfg);
+  const root = new THREE.Group(); const body = new THREE.Group(); root.add(body);
+  const C = { groda: '#4caf50', gepard: '#ffc107', orn: '#6d4c41', kanin: '#f5f5f5', skoldpadda: '#43a047' }[kind] || '#999';
+  const m = mat(C);
+  const box = (w, h, d, mm = m, x = 0, y = 0, z = 0) => { const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mm); b.position.set(x, y, z); b.castShadow = true; body.add(b); return b; };
+  // kropp (längs z, framsidan är +z) och huvud med ditt ansikte
+  const torso = box(2, 1.4, 3, m, 0, 2.2, 0);
+  const faceMat = new THREE.MeshLambertMaterial({ map: faceTexture(cfg.face, C) });
+  const head = new THREE.Mesh(new THREE.BoxGeometry(1.4, 1.4, 1.4), [m, m, m, m, faceMat, m]); head.position.set(0, 3.4, 1.6); head.castShadow = true; body.add(head);
+  const legs = [[-0.7, 1.0], [0.7, 1.0], [-0.7, -1.0], [0.7, -1.0]].map(([x, z]) => { const l = box(0.6, 1.5, 0.6, m, x, 1.5, z); l.geometry.translate(0, -0.75, 0); return l; });
+  const extras = {};
+  if (kind === 'groda') { const eye = mat('#ffffff'); [-0.4, 0.4].forEach(x => { box(0.45, 0.45, 0.45, eye, x, 4.3, 1.6); box(0.2, 0.2, 0.2, mat('#111'), x, 4.35, 1.85); }); }
+  if (kind === 'gepard') { const spot = mat('#5d4037'); for (let i = 0; i < 8; i++) box(0.3, 0.3, 0.3, spot, (i % 2 ? 1 : -1) * 0.9, 2.2 + (i % 3) * 0.3, -1 + (i % 4) * 0.6); extras.tail = box(0.3, 0.3, 1.8, m, 0, 2.6, -2.2); }
+  if (kind === 'orn') { const w = mat('#5d4037'); extras.wingL = box(2.6, 0.15, 1.6, w, -2.2, 2.9, 0); extras.wingR = box(2.6, 0.15, 1.6, w, 2.2, 2.9, 0); extras.wingL.geometry.translate(-1.3, 0, 0); extras.wingR.geometry.translate(1.3, 0, 0); extras.wingL.position.x = -0.9; extras.wingR.position.x = 0.9; box(0.4, 0.3, 0.6, mat('#ffb300'), 0, 3.2, 2.5); }
+  if (kind === 'kanin') { [-0.4, 0.4].forEach(x => { box(0.4, 1.6, 0.25, m, x, 4.8, 1.4); box(0.2, 1.1, 0.1, mat('#f8bbd0'), x, 4.8, 1.55); }); box(0.3, 0.2, 0.2, mat('#f06292'), 0, 3.1, 2.35); box(0.6, 0.6, 0.6, mat('#ffffff'), 0, 2.4, -1.6); }
+  if (kind === 'skoldpadda') { box(2.4, 1.0, 3.2, mat('#2e7d32'), 0, 3.1, 0); box(1.8, 0.4, 2.4, mat('#1b5e20'), 0, 3.8, 0); }
+  root.scale.setScalar(AVATAR_SCALE);
+  root.userData = { animal: kind, legs, body, head, extras };
+  return root;
+}
+
 // Enkel gånganimation
 export function animateAvatar(root, t, moving, airborne, flying = false) {
+  if (root.userData.animal) return animateAnimal(root, t, moving, airborne, flying);
   const { legL, legR, armL, armR, body } = root.userData;
   if (flying) { // superman: armarna rakt fram, benen bakåt, kroppen lutad
     armL.rotation.x = armR.rotation.x = -3.0; legL.rotation.x = legR.rotation.x = 0.4; body.rotation.x = 0.9; body.position.y = 1.2 + Math.sin(t * 4) * 0.15;
@@ -122,4 +155,14 @@ export function animateAvatar(root, t, moving, airborne, flying = false) {
   legL.rotation.x = s * 0.7; legR.rotation.x = -s * 0.7;
   armL.rotation.x = -s * 0.7; armR.rotation.x = s * 0.7;
   body.position.y = moving ? Math.abs(Math.cos(t * 11)) * 0.12 : 0;
+}
+
+function animateAnimal(root, t, moving, airborne, flying) {
+  const { legs, body, extras, animal } = root.userData;
+  const s = moving && !airborne ? Math.sin(t * 12) : 0;
+  legs.forEach((l, i) => { l.rotation.x = airborne ? (i < 2 ? -0.8 : 0.8) : s * 0.8 * (i === 0 || i === 3 ? 1 : -1); });
+  body.rotation.x = flying ? 0.4 : 0; body.position.y = moving && !airborne ? Math.abs(Math.cos(t * 12)) * 0.15 : 0;
+  if (extras.wingL) { const f = airborne ? Math.sin(t * (flying ? 10 : 16)) * 0.7 : 0.15; extras.wingL.rotation.z = f; extras.wingR.rotation.z = -f; }
+  if (extras.tail) extras.tail.rotation.y = Math.sin(t * 6) * 0.3;
+  if (animal === 'groda' && airborne) { legs[2].rotation.x = legs[3].rotation.x = 1.4; }
 }

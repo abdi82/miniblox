@@ -1,6 +1,6 @@
 // Spelmotor: scen, kamera i tredje person, fysik mot lådor, tangentbord + pekskärm, HUD och ljud.
 import * as THREE from 'three';
-import { buildAvatar, animateAvatar, AVATAR_HEIGHT } from './avatar.js';
+import { buildAvatar, buildAnimal, animateAvatar, AVATAR_HEIGHT } from './avatar.js';
 
 export const PLAYER = { hw: 0.45, h: AVATAR_HEIGHT, speed: 9, jump: 12.5, jump2: 11, gravity: 32, maxJumps: 2, flyTime: 10, flyUp: 7, flySink: -2.5 }; // 2 hopp = dubbelhopp, tredje tryck = flyga
 export const isTouch = matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0;
@@ -195,18 +195,22 @@ export class Engine {
     this.deathY = y + 0.5;
   }
 
-  spawnPlayer(avatarCfg, pos) {
+  spawnPlayer(avatarCfg, pos, animal = 'human', stats = {}) {
     if (this.player) this.scene.remove(this.player.mesh);
-    const mesh = buildAvatar(avatarCfg); this.scene.add(mesh);
-    this.player = { mesh, pos: new THREE.Vector3().copy(pos), vel: new THREE.Vector3(), grounded: false, standOn: null, facing: Math.PI, spawn: pos.clone(), dead: false };
+    const mesh = buildAnimal(animal, avatarCfg); this.scene.add(mesh);
+    // Egenskaper per figur (djurens superkrafter): multiplikatorer på speed/jump, eller egna värden
+    const st = { speed: PLAYER.speed * (stats.speed || 1), jump: PLAYER.jump * (stats.jump || 1), jump2: PLAYER.jump2 * (stats.jump || 1), maxJumps: stats.maxJumps || PLAYER.maxJumps, flyTime: stats.flyTime || PLAYER.flyTime, lavaImmune: !!stats.lavaImmune, glide: !!stats.glide };
+    this.player = { mesh, pos: new THREE.Vector3().copy(pos), vel: new THREE.Vector3(), grounded: false, standOn: null, facing: Math.PI, spawn: pos.clone(), dead: false, st };
     this.cam.yaw = 0; this.cam.pitch = 0.35;
     this._syncPlayer(); return this.player;
   }
   respawn() {
     const p = this.player; p.pos.copy(p.spawn); p.vel.set(0, 0, 0); p.dead = false; p.flying = 0; p.jumps = 0; this._flyHud(null); p.mesh.visible = true; this._syncPlayer();
   }
-  die() {
-    const p = this.player; if (p.dead) return; p.dead = true; sfx.die(); p.mesh.visible = false;
+  die(cause) {
+    const p = this.player; if (p.dead) return;
+    if (cause === 'lava' && p.st?.lavaImmune) return; // sköldpaddan tål lava
+    p.dead = true; sfx.die(); p.mesh.visible = false;
     this.emit('die');
     setTimeout(() => { if (this.running) this.respawn(); }, 700);
   }
@@ -262,7 +266,7 @@ export class Engine {
     let dx = -fwd * Math.sin(yaw) + mv.x * Math.cos(yaw), dz = -fwd * Math.cos(yaw) - mv.x * Math.sin(yaw);
     const moving = Math.hypot(dx, dz) > 0.01;
     if (moving) { const l = Math.hypot(dx, dz); dx /= l; dz /= l; const str = Math.min(1, Math.hypot(mv.x, mv.y)); dx *= str; dz *= str; p.facing = Math.atan2(dx, dz); }
-    const speed = PLAYER.speed;
+    const speed = p.st.speed;
     p.vel.x = dx * speed; p.vel.z = dz * speed;
     if (!(p.flying > 0)) p.vel.y -= PLAYER.gravity * dt;
     if (p.grounded) { p.jumps = 0; p.flewThisAir = false; }
@@ -272,27 +276,29 @@ export class Engine {
       p.flying -= dt; p.vel.y = inp.jumpHeldNow ? PLAYER.flyUp : PLAYER.flySink; p.vel.x *= 1.3; p.vel.z *= 1.3;
       this._flyHud(p.flying);
       if (p.flying <= 0) { p.flying = 0; this._flyHud(null); hud.center('<div class="small">Flygtiden är slut!</div>', 1200); }
-    } else if (pressed && (p.grounded || (p.jumps ?? 0) < PLAYER.maxJumps)) {
+    } else if (pressed && (p.grounded || (p.jumps ?? 0) < p.st.maxJumps)) {
       if (!p.grounded && !p.jumps) p.jumps = 1; // ramlade av kanten utan att hoppa: räkna som ett använt hopp
-      p.vel.y = p.jumps ? PLAYER.jump2 : PLAYER.jump; p.jumps = (p.jumps || 0) + 1; p.grounded = false; p.standOn = null; sfx.jump();
+      p.vel.y = p.jumps ? p.st.jump2 : p.st.jump; p.jumps = (p.jumps || 0) + 1; p.grounded = false; p.standOn = null; sfx.jump();
       if (p.jumps > 1) this._puff(p.pos);
     } else if (pressed && !p.grounded && !p.flewThisAir) {
-      // Tredje trycket i luften: flyg i 10 sekunder
-      p.flying = PLAYER.flyTime; p.flewThisAir = true; p.vel.y = PLAYER.flyUp; sfx.fly(); this._puff(p.pos);
+      // Nästa tryck i luften: flyg (10 s, örnen 20 s)
+      p.flying = p.st.flyTime; p.flewThisAir = true; p.vel.y = PLAYER.flyUp; sfx.fly(); this._puff(p.pos);
       hud.center('<div>✈️ Du flyger!</div><div class="small">Håll hoppa för att stiga</div>', 1500);
+    } else if (p.st.glide && !p.grounded && inp.jumpHeldNow && p.vel.y < -3) {
+      p.vel.y = -3; // örnen svävar
     }
     // X
     p.pos.x += p.vel.x * dt;
-    for (const b of this.boxes) if (b.type !== 'coin' && this._overlap(b, p.pos)) { p.pos.x = p.vel.x > 0 ? b.min.x - hw - 0.001 : b.max.x + hw + 0.001; if (b.type === 'lava') return this.die(); }
+    for (const b of this.boxes) if (b.type !== 'coin' && this._overlap(b, p.pos)) { p.pos.x = p.vel.x > 0 ? b.min.x - hw - 0.001 : b.max.x + hw + 0.001; if (b.type === 'lava' && !p.st.lavaImmune) return this.die('lava'); }
     // Z
     p.pos.z += p.vel.z * dt;
-    for (const b of this.boxes) if (this._overlap(b, p.pos)) { p.pos.z = p.vel.z > 0 ? b.min.z - hw - 0.001 : b.max.z + hw + 0.001; if (b.type === 'lava') return this.die(); }
+    for (const b of this.boxes) if (this._overlap(b, p.pos)) { p.pos.z = p.vel.z > 0 ? b.min.z - hw - 0.001 : b.max.z + hw + 0.001; if (b.type === 'lava' && !p.st.lavaImmune) return this.die('lava'); }
     // Y
     p.pos.y += p.vel.y * dt; p.grounded = false; let stand = null;
     for (const b of this.boxes) if (this._overlap(b, p.pos)) {
       if (p.vel.y <= 0) { p.pos.y = b.max.y; p.vel.y = 0; p.grounded = true; stand = b; }
       else { p.pos.y = b.min.y - h; p.vel.y = 0; }
-      if (b.type === 'lava') return this.die();
+      if (b.type === 'lava' && !p.st.lavaImmune) return this.die('lava');
     }
     p.standOn = stand;
     if (stand && stand.type === 'checkpoint' && p.lastCheckpoint !== stand) { p.lastCheckpoint = stand; p.spawn.set(stand.x, stand.max.y, stand.z); sfx.check(); this.emit('checkpoint', stand); }

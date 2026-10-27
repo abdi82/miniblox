@@ -2,11 +2,11 @@
 import * as THREE from 'three';
 import { store, SKIN_COLORS, CLOTH_COLORS, FACES, HATS } from './store.js';
 import { buildAvatar, animateAvatar } from './avatar.js';
-import { hud, fmtTime, isTouch } from './engine.js';
+import { hud, isTouch } from './engine.js';
 
 const GAMES = [
-  { id: 'obby', title: 'Hinderbanan', emoji: '🏃', bg: 'linear-gradient(135deg,#ff9a3c,#ff3c6e)', rating: 96, desc: 'Hoppa mellan plattformar, akta dig för lavan och ta dig till målflaggan. Gröna plattformar sparar var du är. Klara banan snabbt för att slå ditt rekord!',
-    tips: ['Dubbelhopp: tryck hoppa en gång till i luften', 'Trippelhopp: tryck en tredje gång så flyger du i 10 sekunder (nedräkning uppe till vänster)', 'Första gången du klarar banan får du 60 mynt', 'Färre dödar = fler mynt'], load: () => import('./games/obby.js') },
+  { id: 'obby', title: 'Hinderbanan', emoji: '🏃', bg: 'linear-gradient(135deg,#ff9a3c,#ff3c6e)', rating: 96, desc: 'En bana som aldrig tar slut! Hoppa mellan plattformar, akta dig för lavan och kom så långt du kan. Det blir svårare ju längre du kommer. Gröna plattformar är kontrollpunkter och ger mynt. Välj vilket djur du vill vara!',
+    tips: ['Välj djur: groda hoppar högt, gepard springer fort, örn flyger länge, kanin hoppar tre gånger, sköldpadda tål lava', 'Dubbelhopp: tryck hoppa en gång till i luften', 'Trippelhopp: tryck en tredje gång så flyger du i 10 sekunder (nedräkning uppe till vänster)', 'Varje kontrollpunkt ger 2 mynt, var tionde ger 10 extra', 'Rekordet räknas i meter'], load: () => import('./games/obby.js') },
   { id: 'coins', title: 'Myntjakten', emoji: '🪙', bg: 'linear-gradient(135deg,#ffd200,#f7971e)', rating: 94, desc: 'Samla så många mynt du hinner på 60 sekunder. Mynten finns på marken, på lådor och högst upp i tornen. Varje mynt du samlar blir dina!',
     tips: ['Alla mynt = 25 bonusmynt', 'Tornen har två mynt på toppen'], load: () => import('./games/coins.js') },
   { id: 'build', title: 'Bygg din värld', emoji: '🧱', bg: 'linear-gradient(135deg,#43e97b,#38f9d7)', rating: 98, desc: 'Bygg vad du vill med färgade block: hus, torn, labyrinter. Din värld sparas, så du kan fortsätta nästa gång. Tryck "Spela i världen" för att gå runt i det du byggt!',
@@ -41,7 +41,7 @@ function shell(active, content) {
 function gameCard(g) {
   const r = store.current.records[g.id] || {};
   const dashBest = g.id === 'dash' ? Math.max(0, ...Object.values(r).map(x => x.best || 0)) : 0;
-  const meta = g.id === 'obby' && r.best ? `Rekord ${fmtTime(r.best)}` : g.id === 'coins' && r.best ? `Rekord ${r.best} mynt` : g.id === 'build' ? `${Object.keys(store.current.world || {}).length} block byggda` : g.id === 'dash' && dashBest ? `Bäst ${dashBest} %` : 'Inte spelat än';
+  const meta = g.id === 'obby' && r.dist ? `Rekord ${r.dist} m` : g.id === 'coins' && r.best ? `Rekord ${r.best} mynt` : g.id === 'build' ? `${Object.keys(store.current.world || {}).length} block byggda` : g.id === 'dash' && dashBest ? `Bäst ${dashBest} %` : 'Inte spelat än';
   return `<a class="card" href="#/game/${g.id}"><div class="thumb" style="background:${g.bg}">${g.emoji}</div><div class="title">${g.title}</div><div class="meta">👍 ${g.rating}% · ${meta}</div></a>`;
 }
 
@@ -69,7 +69,7 @@ function viewHome() {
     <h2>Rekommenderat för dig</h2><div class="grid">${GAMES.map(gameCard).join('')}</div>
     <h2>Dina rekord</h2>
     <div class="stats">
-      <div class="stat"><b>${p.records.obby?.best ? fmtTime(p.records.obby.best) : '–'}</b><span>Hinderbanan, bästa tid</span></div>
+      <div class="stat"><b>${p.records.obby?.dist ? p.records.obby.dist + ' m' : '–'}</b><span>Hinderbanan, längst</span></div>
       <div class="stat"><b>${p.records.coins?.best ?? '–'}</b><span>Myntjakten, flest mynt</span></div>
       <div class="stat"><b>${Object.keys(p.world || {}).length}</b><span>Block i din värld</span></div>
       <div class="stat"><b>${p.owned.length - 1}</b><span>Hattar du äger</span></div>
@@ -84,8 +84,8 @@ function viewGame(id) {
       <h1 style="margin-top:0">${g.title}</h1><div class="sub">Av MiniBlox · 👍 ${g.rating}%</div>
       <button class="btn green play" id="play">▶ Spela</button>
       <div class="stats">
-        <div class="stat"><b>${id === 'obby' ? (r.best ? fmtTime(r.best) : '–') : id === 'coins' ? (r.best ?? '–') : id === 'dash' ? Object.entries(r).filter(([k, x]) => !k.startsWith('egen') && x.wins).length + ' / 3' : Object.keys(store.current.world || {}).length}</b><span>${id === 'obby' ? 'Bästa tid' : id === 'coins' ? 'Flest mynt' : id === 'dash' ? 'Banor klarade' : 'Block'}</span></div>
-        <div class="stat"><b>${id === 'dash' ? Object.values(r).reduce((a, x) => a + (x.attempts || 0), 0) : (r.wins ?? r.plays ?? 0)}</b><span>${id === 'obby' ? 'Gånger klarad' : id === 'dash' ? 'Försök totalt' : 'Gånger spelad'}</span></div>
+        <div class="stat"><b>${id === 'obby' ? (r.dist ? r.dist + ' m' : '–') : id === 'coins' ? (r.best ?? '–') : id === 'dash' ? Object.entries(r).filter(([k, x]) => !k.startsWith('egen') && x.wins).length + ' / 3' : Object.keys(store.current.world || {}).length}</b><span>${id === 'obby' ? 'Längst' : id === 'coins' ? 'Flest mynt' : id === 'dash' ? 'Banor klarade' : 'Block'}</span></div>
+        <div class="stat"><b>${id === 'dash' ? Object.values(r).reduce((a, x) => a + (x.attempts || 0), 0) : id === 'obby' ? (r.checkpoints ?? 0) : (r.wins ?? r.plays ?? 0)}</b><span>${id === 'obby' ? 'Kontrollpunkter' : id === 'dash' ? 'Försök totalt' : 'Gånger spelad'}</span></div>
       </div>
     </div></div>
     <h2>Om spelet</h2><div class="desc">${g.desc}<ul>${g.tips.map(t => `<li>${t}</li>`).join('')}</ul>
