@@ -11,6 +11,8 @@ const GAMES = [
     tips: ['Alla mynt = 25 bonusmynt', 'Tornen har två mynt på toppen'], load: () => import('./games/coins.js') },
   { id: 'build', title: 'Bygg din värld', emoji: '🧱', bg: 'linear-gradient(135deg,#43e97b,#38f9d7)', rating: 98, desc: 'Bygg vad du vill med färgade block: hus, torn, labyrinter. Din värld sparas, så du kan fortsätta nästa gång. Tryck "Spela i världen" för att gå runt i det du byggt!',
     tips: ['Högerklick tar bort block', 'Du kan hoppa upp på ett block i taget'], load: () => import('./games/build.js') },
+  { id: 'dash', title: 'Kubdash', emoji: '🟦', bg: 'linear-gradient(135deg,#1a0b3a,#2bd4ff)', rating: 97, desc: 'Kuben springer själv till musiken. Tryck för att hoppa över spikar och block. Nuddar du något börjar du om från början! Tre banor: Lätt, Normal och Svår, med hopp-orbs, studsplattor, skeppsflygning och gravitation som vänds upp och ner. Hitta de hemliga mynten.',
+    tips: ['Håll inne knappen så hoppar du igen direkt när du landar', 'Övningsläge: börja om från senaste gröna flaggan i stället för från början', 'Rita egna banor i filen js/games/dash-levels.js'], load: () => import('./games/dash.js') },
 ];
 const app = document.getElementById('app');
 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
@@ -38,7 +40,8 @@ function shell(active, content) {
 }
 function gameCard(g) {
   const r = store.current.records[g.id] || {};
-  const meta = g.id === 'obby' && r.best ? `Rekord ${fmtTime(r.best)}` : g.id === 'coins' && r.best ? `Rekord ${r.best} mynt` : g.id === 'build' ? `${Object.keys(store.current.world || {}).length} block byggda` : 'Inte spelat än';
+  const dashBest = g.id === 'dash' ? Math.max(0, ...Object.values(r).map(x => x.best || 0)) : 0;
+  const meta = g.id === 'obby' && r.best ? `Rekord ${fmtTime(r.best)}` : g.id === 'coins' && r.best ? `Rekord ${r.best} mynt` : g.id === 'build' ? `${Object.keys(store.current.world || {}).length} block byggda` : g.id === 'dash' && dashBest ? `Bäst ${dashBest} %` : 'Inte spelat än';
   return `<a class="card" href="#/game/${g.id}"><div class="thumb" style="background:${g.bg}">${g.emoji}</div><div class="title">${g.title}</div><div class="meta">👍 ${g.rating}% · ${meta}</div></a>`;
 }
 
@@ -81,12 +84,12 @@ function viewGame(id) {
       <h1 style="margin-top:0">${g.title}</h1><div class="sub">Av MiniBlox · 👍 ${g.rating}%</div>
       <button class="btn green play" id="play">▶ Spela</button>
       <div class="stats">
-        <div class="stat"><b>${id === 'obby' ? (r.best ? fmtTime(r.best) : '–') : id === 'coins' ? (r.best ?? '–') : Object.keys(store.current.world || {}).length}</b><span>${id === 'obby' ? 'Bästa tid' : id === 'coins' ? 'Flest mynt' : 'Block'}</span></div>
-        <div class="stat"><b>${r.wins ?? r.plays ?? 0}</b><span>${id === 'obby' ? 'Gånger klarad' : 'Gånger spelad'}</span></div>
+        <div class="stat"><b>${id === 'obby' ? (r.best ? fmtTime(r.best) : '–') : id === 'coins' ? (r.best ?? '–') : id === 'dash' ? Object.values(r).filter(x => x.wins).length + ' / 3' : Object.keys(store.current.world || {}).length}</b><span>${id === 'obby' ? 'Bästa tid' : id === 'coins' ? 'Flest mynt' : id === 'dash' ? 'Banor klarade' : 'Block'}</span></div>
+        <div class="stat"><b>${id === 'dash' ? Object.values(r).reduce((a, x) => a + (x.attempts || 0), 0) : (r.wins ?? r.plays ?? 0)}</b><span>${id === 'obby' ? 'Gånger klarad' : id === 'dash' ? 'Försök totalt' : 'Gånger spelad'}</span></div>
       </div>
     </div></div>
     <h2>Om spelet</h2><div class="desc">${g.desc}<ul>${g.tips.map(t => `<li>${t}</li>`).join('')}</ul>
-    <b>Så spelar du:</b> ${isTouch ? 'Vänster sida av skärmen: gå. Höger sida: titta runt. Knappen "Hoppa": hoppa, tryck igen i luften för dubbelhopp, och en tredje gång för att flyga i 10 sekunder.' : 'WASD eller piltangenter: gå. Mellanslag: hoppa, tryck igen i luften för dubbelhopp, och en tredje gång för att flyga i 10 sekunder. Dra med musen: titta runt.'}</div>`);
+    <b>Så spelar du:</b> ${id === 'dash' ? (isTouch ? 'Tryck var som helst på skärmen för att hoppa. Håll inne för att hoppa igen direkt. I skeppet: håll för att flyga upp, släpp för att dyka.' : 'Mellanslag, pil upp eller klick = hoppa. Håll inne för att hoppa igen direkt. I skeppet: håll för att flyga upp, släpp för att dyka.') : isTouch ? 'Vänster sida av skärmen: gå. Höger sida: titta runt. Knappen "Hoppa": hoppa, tryck igen i luften för dubbelhopp, och en tredje gång för att flyga i 10 sekunder.' : 'WASD eller piltangenter: gå. Mellanslag: hoppa, tryck igen i luften för dubbelhopp, och en tredje gång för att flyga i 10 sekunder. Dra med musen: titta runt.'}</div>`);
   app.querySelector('#play').onclick = () => play(g);
 }
 
