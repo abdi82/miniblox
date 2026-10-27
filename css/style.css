@@ -117,7 +117,7 @@ h2 { font-size: 18px; margin: 26px 0 12px; }
 .hud-center { position: absolute; left: 0; right: 0; top: 38%; text-align: center; font-size: 36px; }
 .hud-center .small { font-size: 18px; font-weight: 600; }
 .hud-bottom { position: absolute; left: 0; right: 0; bottom: max(14px, env(safe-area-inset-bottom)); text-align: center; font-size: 14px; opacity: .9; }
-.hud-panel { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); background: rgba(255,255,255,.96); color: var(--text); text-shadow: none; border-radius: 16px; padding: 24px 28px; min-width: 300px; text-align: center; font-weight: 600; }
+.hud-panel { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); background: rgba(255,255,255,.96); color: var(--text); text-shadow: none; border-radius: 16px; padding: 24px 28px; min-width: 300px; max-width: min(92vw, 520px); max-height: 88vh; overflow-y: auto; -webkit-overflow-scrolling: touch; text-align: center; font-weight: 600; }
 .hud-panel h3 { margin: 0 0 6px; font-size: 26px; }
 .hud-panel .row { display: flex; gap: 10px; justify-content: center; margin-top: 16px; }
 .hud-panel .btn { pointer-events: auto; }
@@ -125,6 +125,22 @@ h2 { font-size: 18px; margin: 26px 0 12px; }
 .palette .swatch { width: 34px; height: 34px; border-radius: 8px; }
 .hud-tools { position: absolute; right: 12px; top: 56px; display: flex; flex-direction: column; gap: 8px; align-items: flex-end; pointer-events: auto; }
 .hud-tools .palette { justify-content: flex-end; }
+.hud-btn.green { background: var(--green); }
+.hud-panel { max-height: calc(100% - 24px); overflow-y: auto; box-sizing: border-box; max-width: calc(100% - 24px); }
+
+/* ---------- Kubdash: banredigerare ---------- */
+.dash-ed { position: absolute; inset: 0; display: flex; flex-direction: column; pointer-events: auto; padding-top: 48px; box-sizing: border-box; background: #0b0b2b; }
+.dash-ed-grid { flex: 1; position: relative; min-height: 0; touch-action: none; }
+.dash-ed-bars { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; padding: 6px 10px max(6px, env(safe-area-inset-bottom)); background: rgba(8, 8, 32, .95); border-top: 1px solid rgba(179, 136, 255, .45); }
+.dash-ed-palette { display: flex; gap: 6px; overflow-x: auto; flex: 1 1 auto; min-width: 0; padding: 2px; scrollbar-width: none; }
+.dash-ed-palette::-webkit-scrollbar { display: none; }
+.dash-ed-tool { flex: none; width: 54px; height: 54px; border-radius: 10px; border: 2px solid rgba(255,255,255,.14); background: rgba(255,255,255,.05); color: #fff; font-size: 10px; font-weight: 700; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; padding: 0; text-shadow: none; }
+#game-canvas .dash-ed-tool canvas { position: static; inset: auto; width: 30px; height: 30px; }
+.dash-ed-tool.active { border-color: #b388ff; background: rgba(179, 136, 255, .22); box-shadow: 0 0 12px rgba(179, 136, 255, .8); }
+.dash-ed-actions { display: flex; gap: 6px; align-items: center; flex: 0 0 auto; }
+.dash-ed-name { width: 130px; padding: 8px 10px; border-radius: 8px; border: 2px solid rgba(255,255,255,.2); background: rgba(0,0,0,.4); color: #fff; font-size: 14px; font-weight: 700; }
+.dash-ed-name:focus { outline: none; border-color: #b388ff; }
+.dash-ed .hud-btn { padding: 10px 12px; white-space: nowrap; }
 
 #touch { position: absolute; inset: 0; pointer-events: none; }
 #joystick { position: absolute; left: max(30px, env(safe-area-inset-left)); bottom: max(40px, env(safe-area-inset-bottom)); width: 130px; height: 130px; border-radius: 50%; background: rgba(255,255,255,.18); border: 2px solid rgba(255,255,255,.35); pointer-events: none; }

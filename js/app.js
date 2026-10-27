@@ -11,8 +11,8 @@ const GAMES = [
     tips: ['Alla mynt = 25 bonusmynt', 'Tornen har två mynt på toppen'], load: () => import('./games/coins.js') },
   { id: 'build', title: 'Bygg din värld', emoji: '🧱', bg: 'linear-gradient(135deg,#43e97b,#38f9d7)', rating: 98, desc: 'Bygg vad du vill med färgade block: hus, torn, labyrinter. Din värld sparas, så du kan fortsätta nästa gång. Tryck "Spela i världen" för att gå runt i det du byggt!',
     tips: ['Högerklick tar bort block', 'Du kan hoppa upp på ett block i taget'], load: () => import('./games/build.js') },
-  { id: 'dash', title: 'Kubdash', emoji: '🟦', bg: 'linear-gradient(135deg,#1a0b3a,#2bd4ff)', rating: 97, desc: 'Kuben springer själv till musiken. Tryck för att hoppa över spikar och block. Nuddar du något börjar du om från början! Tre banor: Lätt, Normal och Svår, med hopp-orbs, studsplattor, skeppsflygning och gravitation som vänds upp och ner. Hitta de hemliga mynten.',
-    tips: ['Håll inne knappen så hoppar du igen direkt när du landar', 'Övningsläge: börja om från senaste gröna flaggan i stället för från början', 'Rita egna banor i filen js/games/dash-levels.js'], load: () => import('./games/dash.js') },
+  { id: 'dash', title: 'Kubdash', emoji: '🟦', bg: 'linear-gradient(135deg,#1a0b3a,#2bd4ff)', rating: 97, desc: 'Kuben springer själv till musiken. Tryck för att hoppa över spikar och block. Nuddar du något börjar du om från början! Tre banor: Lätt, Normal och Svår, med hopp-orbs, studsplattor, skeppsflygning och gravitation som vänds upp och ner. Hitta de hemliga mynten. Rita egna banor i banredigeraren!',
+    tips: ['Håll inne knappen så hoppar du igen direkt när du landar', 'Övningsläge: börja om från senaste gröna flaggan i stället för från början', 'Rita egna banor: tryck på Egna banor i banvalet'], load: () => import('./games/dash.js') },
 ];
 const app = document.getElementById('app');
 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
@@ -84,7 +84,7 @@ function viewGame(id) {
       <h1 style="margin-top:0">${g.title}</h1><div class="sub">Av MiniBlox · 👍 ${g.rating}%</div>
       <button class="btn green play" id="play">▶ Spela</button>
       <div class="stats">
-        <div class="stat"><b>${id === 'obby' ? (r.best ? fmtTime(r.best) : '–') : id === 'coins' ? (r.best ?? '–') : id === 'dash' ? Object.values(r).filter(x => x.wins).length + ' / 3' : Object.keys(store.current.world || {}).length}</b><span>${id === 'obby' ? 'Bästa tid' : id === 'coins' ? 'Flest mynt' : id === 'dash' ? 'Banor klarade' : 'Block'}</span></div>
+        <div class="stat"><b>${id === 'obby' ? (r.best ? fmtTime(r.best) : '–') : id === 'coins' ? (r.best ?? '–') : id === 'dash' ? Object.entries(r).filter(([k, x]) => !k.startsWith('egen') && x.wins).length + ' / 3' : Object.keys(store.current.world || {}).length}</b><span>${id === 'obby' ? 'Bästa tid' : id === 'coins' ? 'Flest mynt' : id === 'dash' ? 'Banor klarade' : 'Block'}</span></div>
         <div class="stat"><b>${id === 'dash' ? Object.values(r).reduce((a, x) => a + (x.attempts || 0), 0) : (r.wins ?? r.plays ?? 0)}</b><span>${id === 'obby' ? 'Gånger klarad' : id === 'dash' ? 'Försök totalt' : 'Gånger spelad'}</span></div>
       </div>
     </div></div>

@@ -2,6 +2,7 @@
 import { hud, sfx, isTouch } from '../engine.js';
 import { faceTexture } from '../avatar.js';
 import { LEVELS } from './dash-levels.js';
+import { openEditor, gridToMap, mapToGrid } from './dash-editor.js';
 
 const H = 10, SPEED = 10.4, G = 90, JUMP = 21, PAD = 30, SHIP_ACC = 75, SHIP_MAX = 12;
 
@@ -65,7 +66,15 @@ export function start(ctx) {
   const avatar = ctx.player.avatar; const face = faceTexture(avatar.face, avatar.skin).image;
   const rec = () => { const r = ctx.store.current.records; r.dash = r.dash || {}; return r.dash; };
   let level = null, L = null, music = null, practice = false, running = true, raf = 0;
-  const P = { x: 0, y: 0, vy: 0, grav: 1, mode: 'cube', ground: true, rot: 0, dead: 0, attempts: 0, cp: null, coins: [], finished: false, shipTilt: 0 };
+  // Inställningar som barnen väljer själva: tempo och "kan inte dö". Sparas per spelare.
+  const TEMPOS = [['lugn', '🐢 Lugn', 0.6], ['normal', '🙂 Normal', 0.8], ['snabb', '⚡ Snabb', 1.0]];
+  const opts = Object.assign({ tempo: 'lugn', ghost: false }, ctx.store.current.dashOpts || {});
+  const saveOpts = () => ctx.store.update(p => { p.dashOpts = { ...opts }; });
+  const tempo = () => (TEMPOS.find(t => t[0] === opts.tempo) || TEMPOS[0])[2];
+  let editor = null, testing = false; // banredigeraren och "Testa"-läget (inga mynt eller rekord)
+  const CUSTOM = { color: '#b388ff', difficulty: 'Egen bana', bpm: 135, reward: 20, custom: true };
+  const customLevels = () => (ctx.store.current.dashLevels || []).map(c => ({ ...CUSTOM, ...c }));
+  const P = { x: 0, y: 0, vy: 0, grav: 1, mode: 'cube', ground: true, rot: 0, dead: 0, attempts: 0, cp: null, coins: [], finished: false, shipTilt: 0, bumps: 0, shield: 0 };
   const input = { held: false, pressed: false };
   const parts = []; let shake = 0, flash = 0, time = 0, last = performance.now(), acc = 0;
   const W = () => canvas.width / devicePixelRatio, Hpx = () => canvas.height / devicePixelRatio;
@@ -87,55 +96,113 @@ export function start(ctx) {
         <span style="width:14px;height:40px;border-radius:6px;background:${l.color};display:inline-block"></span>
         <span style="flex:1"><b>${l.name}</b><br><span class="sub" style="font-size:12px">${l.difficulty} · Bäst ${r.best || 0} % · ${r.attempts || 0} försök · ${(r.coins || []).length}/${parseLevel(l.map).coins.length} 🪙</span></span>
         <span style="color:${r.wins ? 'var(--green)' : 'var(--muted)'}">${r.wins ? '✔' : '▶'}</span></button>`; }).join('')}
-      <p class="sub" style="font-size:12px;margin:10px 0 0">${isTouch ? 'Tryck på skärmen för att hoppa. Håll inne för att hoppa igen direkt.' : 'Mellanslag eller klick = hoppa. Håll inne för att hoppa igen direkt.'}</p>`);
+      <button class="btn ghost" id="d-custom" style="width:100%;margin-top:8px">✏️ Egna banor (${customLevels().length})</button>
+      <div style="margin-top:12px;font-size:13px"><b>Tempo</b></div>
+      <div class="row" style="margin-top:6px;gap:6px">${TEMPOS.map(t => `<button class="btn small ${opts.tempo === t[0] ? '' : 'ghost'}" data-tempo="${t[0]}">${t[1]}</button>`).join('')}</div>
+      <div class="row" style="margin-top:8px"><button class="btn small ${opts.ghost ? 'green' : 'ghost'}" id="d-ghost">${opts.ghost ? '🛡️ Kan inte dö: PÅ' : '🛡️ Kan inte dö: av'}</button></div>
+      <p class="sub" style="font-size:12px;margin:10px 0 0">${isTouch ? 'Tryck på skärmen för att hoppa. Håll inne för att hoppa igen direkt.' : 'Mellanslag eller klick = hoppa. Håll inne för att hoppa igen direkt.'}<br>Lugn = allt går långsammare, hoppen blir lika långa. Kan inte dö = du studsar igenom hinder i stället för att börja om.</p>`);
+    document.querySelectorAll('[data-tempo]').forEach(b => b.onclick = () => { opts.tempo = b.dataset.tempo; saveOpts(); showLevels(); });
+    document.getElementById('d-ghost').onclick = () => { opts.ghost = !opts.ghost; saveOpts(); showLevels(); };
     document.querySelectorAll('[data-level]').forEach(b => b.onclick = () => startLevel(LEVELS.find(l => l.id === b.dataset.level)));
+    document.getElementById('d-custom').onclick = showCustom;
   }
-  function startLevel(l) {
-    level = l; L = parseLevel(l.map); practice = false; P.attempts = 0; P.cp = null;
+  // ---------- Egna banor ----------
+  function showCustom() {
+    hud.title('Kubdash'); hud.right(''); hud.center(''); hud.tools(null);
+    const list = customLevels();
+    const p = hud.panel(`<h3>✏️ Egna banor</h3><div class="sub" style="font-size:13px;margin-bottom:6px">Rita en bana, testa den och spara. Klarad egen bana ger 20 mynt första gången, sedan 5.</div>
+      ${list.length ? list.map(l => { const r = rec()[l.id] || {}; return `<div style="display:flex;align-items:center;gap:8px;margin:6px 0;text-align:left">
+        <span style="width:14px;height:40px;border-radius:6px;background:${l.color};display:inline-block"></span>
+        <span style="flex:1;min-width:0"><b>${esc(l.name)}</b><br><span class="sub" style="font-size:12px">Bäst ${r.best || 0} % · ${r.attempts || 0} försök ${r.wins ? '· ✔ klarad' : ''}</span></span>
+        <button class="btn green small" data-play="${l.id}">Spela</button><button class="btn ghost small" data-edit="${l.id}">Ändra</button><button class="btn ghost small" data-del="${l.id}" title="Ta bort">🗑</button></div>`; }).join('')
+      : '<p class="sub">Inga egna banor än. Tryck på + Ny bana!</p>'}
+      <div class="row"><button class="btn" id="d-new">+ Ny bana</button><button class="btn ghost" id="d-back">Tillbaka</button></div>`);
+    p.querySelectorAll('[data-play]').forEach(b => b.onclick = () => startLevel(list.find(l => l.id === b.dataset.play)));
+    p.querySelectorAll('[data-edit]').forEach(b => b.onclick = () => { const l = list.find(x => x.id === b.dataset.edit); openEd({ id: l.id, name: l.name, grid: mapToGrid(l.map) }); });
+    p.querySelectorAll('[data-del]').forEach(b => b.onclick = () => {
+      const l = list.find(x => x.id === b.dataset.del);
+      hud.panel(`<h3>Ta bort "${esc(l.name)}"?</h3><div class="sub">Banan försvinner för alltid.</div><div class="row"><button class="btn danger" id="d-yes">Ta bort</button><button class="btn ghost" id="d-no">Avbryt</button></div>`);
+      document.getElementById('d-yes').onclick = () => { ctx.store.update(p => { p.dashLevels = (p.dashLevels || []).filter(x => x.id !== l.id); if (p.records.dash) delete p.records.dash[l.id]; }); showCustom(); };
+      document.getElementById('d-no').onclick = showCustom;
+    });
+    p.querySelector('#d-new').onclick = () => openEd({ id: 'egen' + Date.now().toString(36), name: `Min bana ${list.length + 1}`, grid: [] });
+    p.querySelector('#d-back').onclick = showLevels;
+  }
+  const esc = (s) => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  function openEd(state) {
+    music?.stop(); music = null; level = null; testing = false; editor?.close();
+    hud.panel(null); hud.title('Banredigerare'); hud.right(''); hud.center(''); hud.bottom(''); hud.tools(null);
+    editor = openEditor(container, state, {
+      color: CUSTOM.color,
+      onTest: (st) => { editor.close(); editor = null; startLevel({ ...CUSTOM, id: st.id, name: st.name || 'Min bana', map: gridToMap(st.grid) }, { test: st }); },
+      onSave: (st) => { saveEd(st); hud.center('<div class="small">💾 Banan är sparad!</div>', 1500); },
+      onClose: (st) => {
+        if (!st.dirty) return closeEd();
+        hud.panel(`<h3>Spara banan?</h3><div class="row"><button class="btn green" id="d-sc">Spara och stäng</button><button class="btn ghost" id="d-nc">Stäng utan att spara</button><button class="btn ghost" id="d-cancel">Avbryt</button></div>`);
+        document.getElementById('d-sc').onclick = () => { saveEd(st); closeEd(); };
+        document.getElementById('d-nc').onclick = closeEd;
+        document.getElementById('d-cancel').onclick = () => hud.panel(null);
+      },
+    });
+  }
+  function saveEd(st) {
+    const name = (st.name || '').trim() || 'Min bana'; st.name = name; st.dirty = false;
+    ctx.store.update(p => { p.dashLevels = p.dashLevels || []; const i = p.dashLevels.findIndex(x => x.id === st.id); const l = { id: st.id, name, map: gridToMap(st.grid) }; if (i >= 0) p.dashLevels[i] = l; else p.dashLevels.push(l); });
+  }
+  function closeEd() { editor?.close(); editor = null; showCustom(); }
+  function startLevel(l, opts = {}) {
+    level = l; L = parseLevel(l.map); practice = false; P.attempts = 0; P.cp = null; testing = opts.test || false;
     hud.panel(null); hud.title(l.name);
-    music?.stop(); music = new Music(l.bpm); music.start();
+    music?.stop(); music = new Music(Math.round(l.bpm * (0.7 + 0.3 * tempo()))); music.start();
     renderTools(); respawn(true);
     hud.center(`<div>${l.name}</div><div class="small">${l.difficulty}</div>`, 1500);
   }
   function renderTools() {
     const t = hud.tools(`<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
-      <button class="hud-btn" id="d-levels">Banor</button>
+      <button class="hud-btn" id="d-levels">${testing ? '✏️ Redigera' : 'Banor'}</button>
       <button class="hud-btn" id="d-practice" style="${practice ? 'background:#00b06f' : ''}">${practice ? '✔ Övningsläge' : 'Övningsläge'}</button>
       <button class="hud-btn" id="d-music">${music?.on ? '🔊' : '🔇'}</button></div>`);
-    t.querySelector('#d-levels').onclick = () => { music?.stop(); music = null; level = null; showLevels(); };
+    t.querySelector('#d-levels').onclick = () => { if (testing) return openEd(testing); music?.stop(); music = null; const c = level.custom; level = null; if (c) showCustom(); else showLevels(); };
     t.querySelector('#d-practice').onclick = () => { practice = !practice; P.cp = null; renderTools(); hud.center(practice ? '<div class="small">Övningsläge: du börjar om från senaste gröna flaggan</div>' : '<div class="small">Vanligt läge: från början!</div>', 1800); };
     t.querySelector('#d-music').onclick = () => { music?.toggle(); renderTools(); };
   }
   function respawn(first) {
     if (!first) P.attempts++;
-    ctx.store.update(p => { const r = p.records.dash = p.records.dash || {}; const e = r[level.id] = r[level.id] || {}; if (!first) e.attempts = (e.attempts || 0) + 1; });
+    if (!testing) ctx.store.update(p => { const r = p.records.dash = p.records.dash || {}; const e = r[level.id] = r[level.id] || {}; if (!first) e.attempts = (e.attempts || 0) + 1; });
     const cp = practice && P.cp;
-    Object.assign(P, { x: cp ? cp.x : -2, y: cp ? cp.y : 0, vy: 0, grav: cp ? cp.grav : 1, mode: cp ? cp.mode : 'cube', ground: true, rot: 0, dead: 0, finished: false, coins: [] });
+    Object.assign(P, { x: cp ? cp.x : -2, y: cp ? cp.y : 0, vy: 0, grav: cp ? cp.grav : 1, mode: cp ? cp.mode : 'cube', ground: true, rot: 0, dead: 0, finished: false, coins: [], bumps: 0, shield: 0 });
     for (const o of L.orbs) o.used = false; for (const p of L.portals) p.used = false; for (const c of L.coins) c.taken = false;
     input.pressed = false; refreshHud();
   }
-  function refreshHud() { const r = rec()[level.id] || {}; hud.right(`🪙 ${P.coins.length} &nbsp; Försök ${P.attempts + 1}${r.best ? ` <span style="opacity:.7">· Bäst ${r.best} %</span>` : ''}`); }
+  function refreshHud() { const r = rec()[level.id] || {}; hud.right(opts.ghost ? `🪙 ${P.coins.length} &nbsp; 🛡️ Krockar ${P.bumps}` : `🪙 ${P.coins.length} &nbsp; Försök ${P.attempts + 1}${r.best ? ` <span style="opacity:.7">· Bäst ${r.best} %</span>` : ''}`); }
   function die() {
-    if (P.dead) return; P.dead = 0.8; sfx.die(); shake = 0.5;
+    if (P.dead) return;
+    if (opts.ghost) { // Kan inte dö: studsa igenom med en liten smäll och en kort sköld
+      if (P.shield > 0) return; P.shield = 0.8; P.bumps++; shake = 0.25; sfx.remove(); refreshHud();
+      for (let i = 0; i < 10; i++) parts.push({ x: P.x + 0.5, y: P.y + 0.5, vx: (Math.random() - 0.5) * 12, vy: Math.random() * 10, life: 0.5, c: '#ffffff' });
+      return;
+    }
+    P.dead = 0.8; sfx.die(); shake = 0.5;
     for (let i = 0; i < 30; i++) parts.push({ x: P.x + 0.5, y: P.y + 0.5, vx: (Math.random() - 0.5) * 20, vy: (Math.random() - 0.3) * 20, life: 0.8, c: Math.random() < 0.5 ? avatar.shirt : avatar.pants });
-    const pct = progress(); ctx.store.update(p => { const e = p.records.dash[level.id]; if (!practice && pct > (e.best || 0)) e.best = pct; });
+    const pct = progress(); if (!testing) ctx.store.update(p => { const e = p.records.dash[level.id]; if (!practice && pct > (e.best || 0)) e.best = pct; });
   }
   function progress() { return Math.max(0, Math.min(100, Math.round(P.x / (L.length - 4) * 100))); }
   function win() {
     P.finished = true; sfx.win(); flash = 1;
     const r = rec()[level.id] || {}; const first = !r.wins;
     let reward = 0, newCoins = 0;
-    if (!practice) {
-      reward = first ? level.reward : 15;
+    if (opts.ghost && !practice && !testing) { reward = 5; ctx.store.addCoins(reward); }
+    else if (!practice && !testing) {
+      reward = level.custom ? (first ? 20 : 5) : (first ? level.reward : 15);
       ctx.store.update(p => { const e = p.records.dash[level.id]; e.wins = (e.wins || 0) + 1; e.best = 100; e.coins = e.coins || []; for (const c of P.coins) if (!e.coins.includes(c)) { e.coins.push(c); newCoins++; } });
-      reward += newCoins * 10; ctx.store.addCoins(reward);
+      reward += newCoins * (level.custom ? 2 : 10); ctx.store.addCoins(reward);
     }
-    hud.panel(`<h3>🏁 Du klarade ${level.name}!</h3>
-      <div>${practice ? 'I övningsläge. Klara den utan för att få mynt!' : `Du fick <b>+${reward}</b> mynt${first ? ' (första gången!)' : ''}${newCoins ? ` · ${newCoins} nya hemliga mynt` : ''}`}</div>
+    hud.panel(`<h3>🏁 Du klarade ${esc(level.name)}!</h3>
+      <div>${testing ? 'Banan går att klara! Spara den så kan du få mynt.' : practice ? 'I övningsläge. Klara den utan för att få mynt!' : opts.ghost ? `Med sköld (${P.bumps} krockar). Du fick <b>+${reward}</b> mynt. Stäng av "Kan inte dö" för hela belöningen!` : `Du fick <b>+${reward}</b> mynt${first ? ' (första gången!)' : ''}${newCoins ? ` · ${newCoins} nya hemliga mynt` : ''}`}</div>
       <div class="sub" style="font-size:13px;margin-top:4px">${P.attempts + 1} försök</div>
-      <div class="row"><button class="btn green" id="again">Igen</button><button class="btn ghost" id="levels">Banor</button><button class="btn ghost" id="lobby">Lobbyn</button></div>`);
+      <div class="row"><button class="btn green" id="again">Igen</button><button class="btn ghost" id="levels">${testing ? '✏️ Redigera' : level.custom ? 'Egna banor' : 'Banor'}</button><button class="btn ghost" id="lobby">Lobbyn</button></div>`);
     document.getElementById('again').onclick = () => { hud.panel(null); P.attempts = -1; respawn(false); };
-    document.getElementById('levels').onclick = () => { music?.stop(); music = null; level = null; showLevels(); };
+    document.getElementById('levels').onclick = () => { if (testing) return openEd(testing); music?.stop(); music = null; const c = level.custom; level = null; if (c) showCustom(); else showLevels(); };
     document.getElementById('lobby').onclick = () => ctx.exit();
   }
 
@@ -144,6 +211,7 @@ export function start(ctx) {
   const hit = (b, x0, y0, x1, y1) => b.x0 < x1 && b.x1 > x0 && b.y0 < y1 && b.y1 > y0;
   function step(dt) {
     if (P.dead || P.finished || !level) return;
+    if (P.shield > 0) P.shield -= dt;
     const prevY0 = P.y, prevY1 = P.y + 1;
     P.x += SPEED * dt; P.ground = false;
     if (P.mode === 'cube') {
@@ -165,10 +233,10 @@ export function start(ctx) {
       else if (P.grav === -1 && P.vy >= 0 && prevY1 <= cy + 0.2) { P.y = cy - 1; P.vy = 0; P.ground = true; }
       else if (P.mode === 'ship' && P.vy > 0 && prevY1 <= cy + 0.2) { P.y = cy - 1; P.vy = 0; }
       else if (P.mode === 'ship' && P.vy < 0 && prevY0 >= cy + 1 - 0.2) { P.y = cy + 1; P.vy = 0; }
-      else { void falling; return die(); }
+      else { void falling; die(); if (!opts.ghost) return; if (P.mode === 'cube') { P.y = P.grav === 1 ? cy + 1 : cy - 1; P.vy = 0; P.ground = true; } else { P.y = P.vy >= 0 ? cy - 1 : cy + 1; P.vy = 0; } }
     }
     const b2 = box();
-    for (const s of L.spikes) { const sy = s.dir === 1 ? s.y + 0.15 : s.y + 0.35; if (hit(b2, s.x + 0.3, sy, s.x + 0.7, sy + 0.5)) return die(); }
+    for (const s of L.spikes) { const sy = s.dir === 1 ? s.y + 0.15 : s.y + 0.35; if (hit(b2, s.x + 0.3, sy, s.x + 0.7, sy + 0.5)) { die(); if (!opts.ghost) return; break; } }
     for (const p of L.pads) if (!p.used && hit(b2, p.x, p.y, p.x + 1, p.y + 0.3)) { p.used = true; P.vy = PAD * P.grav; P.ground = false; sfx.jump(); }
     for (const o of L.orbs) if (!o.used && input.held && hit(b2, o.x - 0.3, o.y - 0.3, o.x + 1.3, o.y + 1.3)) { o.used = true; P.vy = JUMP * P.grav; P.ground = false; sfx.jump(); }
     for (const p of L.portals) if (!p.used && hit(b2, p.x, p.y - 1, p.x + 1, p.y + 2)) {
@@ -230,6 +298,7 @@ export function start(ctx) {
         g2.fillStyle = avatar.shirt; g2.fillRect(-u * 0.3, -u * 0.35, u * 0.5, u * 0.5); g2.drawImage(face, -u * 0.3, -u * 0.35, u * 0.5, u * 0.5);
       } else {
         g2.rotate(-P.rot); g2.scale(1, P.grav);
+        if (opts.ghost) { g2.strokeStyle = P.shield > 0 ? '#ffffff' : 'rgba(255,255,255,.45)'; g2.lineWidth = 3; g2.beginPath(); g2.arc(0, 0, u * 0.75, 0, Math.PI * 2); g2.stroke(); }
         g2.fillStyle = avatar.shirt; g2.shadowColor = avatar.shirt; g2.shadowBlur = 12; g2.fillRect(-u * 0.45, -u * 0.45, u * 0.9, u * 0.9); g2.shadowBlur = 0;
         g2.fillStyle = avatar.pants; g2.fillRect(-u * 0.3, -u * 0.3, u * 0.6, u * 0.6); g2.drawImage(face, -u * 0.25, -u * 0.25, u * 0.5, u * 0.5);
       }
@@ -247,7 +316,7 @@ export function start(ctx) {
   function frame(now) {
     if (!running) return;
     const dt = Math.min(0.05, (now - last) / 1000); last = now; time += dt;
-    acc += dt; while (acc > 1 / 240) { step(1 / 240); acc -= 1 / 240; }
+    acc += dt * tempo(); while (acc > 1 / 240) { step(1 / 240); acc -= 1 / 240; }
     for (const p of parts) { p.x += p.vx * dt; p.y += p.vy * dt; p.vy -= 40 * dt; p.life -= dt; } for (let i = parts.length - 1; i >= 0; i--) if (parts[i].life <= 0) parts.splice(i, 1);
     shake = Math.max(0, shake - dt * 2); flash = Math.max(0, flash - dt * 1.5);
     if (P.dead > 0) { P.dead -= dt; if (P.dead <= 0) { P.dead = 0; respawn(false); } }
@@ -259,7 +328,7 @@ export function start(ctx) {
   return {
     stop() { running = false; cancelAnimationFrame(raf); },
     dispose() {
-      this.stop(); music?.stop(); removeEventListener('resize', resize);
+      this.stop(); music?.stop(); editor?.close(); editor = null; removeEventListener('resize', resize);
       canvas.removeEventListener('pointerdown', down); removeEventListener('pointerup', up); removeEventListener('pointercancel', up);
       removeEventListener('keydown', key); removeEventListener('keyup', key); canvas.remove();
     },

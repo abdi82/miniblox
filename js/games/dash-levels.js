@@ -15,6 +15,12 @@
 
 export const LEVELS = [
   {
+    id: 'gata', name: 'Lugna gatan', difficulty: 'Jättelätt', color: '#7CFF6B', reward: 30, bpm: 120,
+    map: `
+      12*. ^ 10*. ^ 10*. ^ 10*. $@1 8*. ^ 9*. ^ 9*. _ 12*. ^ 8*. ^ 8*. # 10*. ^ 8*. $@2 8*. ^ 7*. ^ 7*. ^ 10*. _ 12*. 2*^ 10*. ^ 8*. $@1 8*. ^ 12*.
+    `,
+  },
+  {
     id: 'steg', name: 'Första steget', difficulty: 'Lätt', color: '#2bd4ff', reward: 50, bpm: 128,
     map: `
       10*. ^ 7*. ^ 7*. 2*^ 8*. # 6*. ^ 4*. ^ 4*. ^ 8*. 2*^ 6*. # # 5*. ## 6*. $@2 2*. ^ 6*. _ 4*. 3*^ 8*. 2*^ 7*. #
