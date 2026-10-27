@@ -79,7 +79,7 @@ export function openEditor(container, state, cb) {
   root.innerHTML = `
     <div class="dash-ed-grid"><canvas></canvas></div>
     <div class="dash-ed-bars">
-      <div class="dash-ed-palette">${TOOLS.map(t => `<button type="button" class="dash-ed-tool" data-tool="${t.ch}"><canvas width="36" height="36"></canvas><span>${t.label}</span></button>`).join('')}</div>
+      <div class="dash-ed-palette">${TOOLS.map(t => `<button type="button" class="dash-ed-tool" data-tool="${t.ch}" aria-label="${t.label}"><canvas width="36" height="36"></canvas><span>${t.label}</span></button>`).join('')}</div>
       <div class="dash-ed-actions">
         <input class="dash-ed-name" maxlength="20" placeholder="Banans namn" autocomplete="off">
         <button type="button" class="hud-btn" id="ed-test">▶ Testa</button>

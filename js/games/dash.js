@@ -111,10 +111,10 @@ export function start(ctx) {
     hud.title('Kubdash'); hud.right(''); hud.center(''); hud.tools(null);
     const list = customLevels();
     const p = hud.panel(`<h3>✏️ Egna banor</h3><div class="sub" style="font-size:13px;margin-bottom:6px">Rita en bana, testa den och spara. Klarad egen bana ger 20 mynt första gången, sedan 5.</div>
-      ${list.length ? list.map(l => { const r = rec()[l.id] || {}; return `<div style="display:flex;align-items:center;gap:8px;margin:6px 0;text-align:left">
+      ${list.length ? list.map(l => { const r = rec()[l.id] || {}; return `<div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin:8px 0;text-align:left">
         <span style="width:14px;height:40px;border-radius:6px;background:${l.color};display:inline-block"></span>
-        <span style="flex:1;min-width:0"><b>${esc(l.name)}</b><br><span class="sub" style="font-size:12px">Bäst ${r.best || 0} % · ${r.attempts || 0} försök ${r.wins ? '· ✔ klarad' : ''}</span></span>
-        <button class="btn green small" data-play="${l.id}">Spela</button><button class="btn ghost small" data-edit="${l.id}">Ändra</button><button class="btn ghost small" data-del="${l.id}" title="Ta bort">🗑</button></div>`; }).join('')
+        <span style="flex:1 1 150px;min-width:0"><b>${esc(l.name)}</b><br><span class="sub" style="font-size:12px;white-space:nowrap">Bäst ${r.best || 0} % · ${r.attempts || 0} försök${r.wins ? ' · ✔' : ''}</span></span>
+        <span style="display:flex;gap:6px;flex:none;margin-left:auto"><button class="btn green small" data-play="${l.id}">Spela</button><button class="btn ghost small" data-edit="${l.id}">Ändra</button><button class="btn ghost small" data-del="${l.id}" title="Ta bort">🗑</button></span></div>`; }).join('')
       : '<p class="sub">Inga egna banor än. Tryck på + Ny bana!</p>'}
       <div class="row"><button class="btn" id="d-new">+ Ny bana</button><button class="btn ghost" id="d-back">Tillbaka</button></div>`);
     p.querySelectorAll('[data-play]').forEach(b => b.onclick = () => startLevel(list.find(l => l.id === b.dataset.play)));
