@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { store, SKIN_COLORS, CLOTH_COLORS, FACES, HATS } from './store.js';
 import { buildAvatar, animateAvatar } from './avatar.js';
 import { hud, isTouch } from './engine.js';
+import { checkForUpdate, VERSION } from './update.js';
 
 const GAMES = [
   { id: 'obby', title: 'Hinderbanan', emoji: '🏃', bg: 'linear-gradient(135deg,#ff9a3c,#ff3c6e)', rating: 96, desc: 'En bana som aldrig tar slut! Hoppa mellan plattformar, akta dig för lavan och kom så långt du kan. Det blir svårare ju längre du kommer. Gröna plattformar är kontrollpunkter och ger mynt. Välj vilket djur du vill vara!',
@@ -55,6 +56,7 @@ function viewPlayers() {
       <button class="player-card new" id="new-player"><span class="face" style="background:#eee">＋</span>Ny spelare</button>
     </div>
     ${isIOS && !standalone ? `<p class="sub tip">📱 Tips för iPad: tryck på <b>Dela</b> <span style="font-size:16px">⎋</span> i Safari och välj <b>Lägg till på hemskärmen</b>. Då öppnas MiniBlox i helskärm som en app.</p>` : ''}
+    <p class="sub" style="font-size:11px;margin-top:30px">Version ${VERSION}</p>
     <div id="new-form" hidden><input class="input" id="new-name" maxlength="14" placeholder="Vad heter du?" autocomplete="off" /><div style="margin-top:12px"><button class="btn green" id="new-ok">Börja spela</button></div></div>
   </div>`;
   app.querySelectorAll('.player-card[data-id]').forEach(b => b.onclick = () => { store.select(b.dataset.id); location.hash = '#/'; });
@@ -187,3 +189,6 @@ function route() {
 }
 addEventListener('hashchange', route);
 route();
+// Hämta ny version automatiskt när spelet öppnas (och när man kommer tillbaka till det på iPaden)
+checkForUpdate(() => toast('Hämtar ny version…'));
+addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && !engine) checkForUpdate(() => toast('Hämtar ny version…')); });
