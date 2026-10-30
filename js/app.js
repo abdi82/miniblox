@@ -14,13 +14,25 @@ const GAMES = [
     tips: ['Högerklick tar bort block', 'Du kan hoppa upp på ett block i taget'], load: () => import('./games/build.js') },
   { id: 'dash', owner: 'Zaki', title: 'Kubdash', emoji: '🟦', bg: 'linear-gradient(135deg,#1a0b3a,#2bd4ff)', rating: 97, desc: 'Kuben springer själv till musiken. Tryck för att hoppa över spikar och block. Nuddar du något börjar du om från början! Tre banor: Lätt, Normal och Svår, med hopp-orbs, studsplattor, skeppsflygning och gravitation som vänds upp och ner. Hitta de hemliga mynten. Rita egna banor i banredigeraren!',
     tips: ['Håll inne knappen så hoppar du igen direkt när du landar', 'Övningsläge: börja om från senaste gröna flaggan i stället för från början', 'Rita egna banor: tryck på Egna banor i banvalet'], load: () => import('./games/dash.js') },
+  { id: 'city', owner: 'Zaki', title: 'Stadsbyggaren', emoji: '🏙️', bg: 'linear-gradient(135deg,#00c6ff,#0072ff)', rating: 97, desc: 'Bygg din egen stad! Dra vägar, sätt bostäder, butiker, fabriker och parker på rutnätet. Folk flyttar in, husen växer i tre nivåer, små bilar kör på vägarna och varje dag kommer skatten in i kronor. Staden sparas så du kan bygga vidare nästa gång. Varje 100 nya invånare ger dig 10 mynt!',
+    tips: ['Vägar först! Hus måste ha en väg högst två rutor bort, annars får de ett rött utropstecken', 'Bostäder växer när det finns butiker eller fabriker i närheten, och parker gör att de når nivå 3', 'Butiker och fabriker växer när många bor i närheten', 'Slut på kronor? Vänta på nästa dag, då kommer skatten'], load: () => import('./games/city.js') },
   { id: 'mystery', owner: 'Noah', title: 'Noahs Murder Mysteri', emoji: '🔪', bg: 'linear-gradient(135deg,#2b2d42,#e53935)', rating: 95, desc: 'Åtta figurer i en herrgård. En är skurk med kniv, en är sheriff med pistol, resten är oskyldiga. Vem är vem? Oskyldiga: spring, göm dig och samla mynt. Sheriff: hitta skurken och skjut. Skurk: ta alla innan tiden går ut! Du spelar mot sju datorstyrda figurer, rollerna lottas varje runda.',
     tips: ['Skurken avslöjas om någon ser honom ta någon', 'Om sheriffen åker ut ligger pistolen kvar på golvet, plocka upp den och bli hjälte!', 'Sheriff: sikta med kameran mot skurken och tryck Skjut. Skjuter du en oskyldig åker du ut själv'], load: () => import('./games/mystery.js') },
+  { id: 'quiz', owner: 'Tävling', title: 'Frågekampen', emoji: '🎤', bg: 'linear-gradient(135deg,#1e3c72,#6a11cb)', rating: 96, desc: 'Appen läser upp frågor med röst på svenska eller engelska och du svarar högt med rösten! Svaret spelas in så du kan lyssna på dig själv. Tävla mot syskonen: alla får lika många frågor på sin egen nivå, snabba svar ger extra poäng, och den som vinner får mest mynt. Räknefrågor, djur, länder, engelska ord och mycket mer.',
+    tips: ['Nivå Liten (4 år): färger, djur och enkla engelska ord', 'Nivå Mellan (8 år) och Stor (10 år): huvudstäder, räkning, engelska meningar', 'Tre rätt i rad ger bonus 🔥', 'Fungerar bäst i Safari på iPaden: tillåt mikrofonen när den frågar'], load: () => import('./games/quiz.js') },
+  // Klassiker: kända spel med öppen källkod som körs i en ruta inuti appen (se vendor/README.md för källor och licenser)
+  { id: 'g2048', owner: 'Klassiker', title: '2048', emoji: '🔢', bg: 'linear-gradient(135deg,#edc22e,#f65e3b)', rating: 93, vendorPath: 'vendor/2048', unit: 'poäng', desc: 'Skjut brickorna åt något håll. När två brickor med samma tal krockar blir de en bricka med dubbla talet: 2 och 2 blir 4, 4 och 4 blir 8… Kan du komma till 2048? Spelet sparas automatiskt så du kan fortsätta nästa gång.',
+    tips: ['Håll din största bricka i ett hörn och fyll på runt den', 'Skjut inte brickorna åt alla håll huller om buller, välj två riktningar du mest använder', 'Varje omgång ger mynt: 1 mynt per 250 poäng (högst 40). Rekordet ligger i spelet självt'], how: 'Pekskärm: svep uppåt, nedåt, åt vänster eller höger på rutnätet. Tangentbord: piltangenterna. "New Game" börjar om.', load: () => import('./games/classic.js') },
+  { id: 'hextris', owner: 'Klassiker', title: 'Hextris', emoji: '⬡', bg: 'linear-gradient(135deg,#2c3e50,#3498db)', rating: 92, vendorPath: 'vendor/hextris', unit: 'poäng', desc: 'Som Tetris, fast på en sexkant! Färgade block faller in mot mitten från alla håll. Vrid sexkanten så att tre eller fler block i samma färg hamnar bredvid varandra, då försvinner de. Blir högen för hög är det slut.',
+    tips: ['Fyll inte en sida för högt, vrid runt och fördela blocken', 'Gör kombo: ta bort flera grupper snabbt efter varandra så får du mer poäng', 'Varje omgång ger mynt: 1 mynt per 100 poäng (högst 40). Rekordet ligger i spelet självt'], how: 'Pekskärm: tryck på vänster eller höger sida av skärmen för att vrida sexkanten. Tangentbord: vänster- och högerpil vrider, nedpil snabbar på. Tryck på play-knappen i mitten för att börja.', load: () => import('./games/classic.js') },
+  { id: 'clumsy', owner: 'Klassiker', title: 'Clumsy Bird', emoji: '🐦', bg: 'linear-gradient(135deg,#4ec0ca,#ded895)', rating: 91, vendorPath: 'vendor/clumsy-bird', unit: 'rör', desc: 'Den klumpiga fågeln flaxar fram mellan gröna rör. Tryck för att flaxa uppåt, släpp så dalar den. Nuddar du ett rör eller marken är det kört! Hur många rör klarar du?',
+    tips: ['Små, lugna tryck är bättre än att hamra på skärmen', 'Titta på nästa öppning, inte på fågeln', 'Varje omgång ger mynt: 1 mynt per rör du klarar (högst 40). Rekordet ligger i spelet självt'], how: 'Pekskärm: tryck var som helst för att flaxa. Tangentbord: mellanslag. Tryck en gång till efter game over för att spela igen.', load: () => import('./games/classic.js') },
 ];
 const app = document.getElementById('app');
 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
 const esc = (s) => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const ownerLabel = (o) => o === 'Klassiker' ? 'Klassiker' : `${o}s spel`;
 const faceEmoji = (p) => FACES.find(f => f.id === p.avatar.face)?.emoji || '🙂';
 function toast(msg) { const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 2500); }
 
@@ -44,8 +56,8 @@ function shell(active, content) {
 function gameCard(g) {
   const r = store.current.records[g.id] || {};
   const dashBest = g.id === 'dash' ? Math.max(0, ...Object.values(r).map(x => x.best || 0)) : 0;
-  const meta = g.id === 'obby' && r.dist ? `Rekord ${r.dist} m` : g.id === 'coins' && r.best ? `Rekord ${r.best} mynt` : g.id === 'build' ? `${Object.keys(store.current.world || {}).length} block byggda` : g.id === 'dash' && dashBest ? `Bäst ${dashBest} %` : g.id === 'mystery' && r.rounds ? `${r.wins || 0} vunna av ${r.rounds}` : 'Inte spelat än';
-  return `<a class="card" href="#/game/${g.id}"><div class="thumb" style="background:${g.bg}">${g.emoji}</div><div class="title">${g.title}</div><div class="meta">${g.owner}s spel · 👍 ${g.rating}% · ${meta}</div></a>`;
+  const meta = g.id === 'obby' && r.dist ? `Rekord ${r.dist} m` : g.id === 'coins' && r.best ? `Rekord ${r.best} mynt` : g.id === 'build' ? `${Object.keys(store.current.world || {}).length} block byggda` : g.id === 'dash' && dashBest ? `Bäst ${dashBest} %` : g.id === 'mystery' && r.rounds ? `${r.wins || 0} vunna av ${r.rounds}` : g.id === 'city' && r.best ? `Rekord ${r.best} invånare` : g.vendorPath && r.best ? `Rekord ${r.best} ${g.unit}` : 'Inte spelat än';
+  return `<a class="card" href="#/game/${g.id}"><div class="thumb" style="background:${g.bg}">${g.emoji}</div><div class="title">${g.title}</div><div class="meta">${ownerLabel(g.owner)} · 👍 ${g.rating}% · ${meta}</div></a>`;
 }
 
 // ---------- Vyer ----------
@@ -67,10 +79,12 @@ function viewPlayers() {
   const create = () => { const n = name.value.trim(); if (!n) return name.focus(); store.addPlayer(n); location.hash = '#/avatar'; };
   app.querySelector('#new-ok').onclick = create; name.onkeydown = (e) => { if (e.key === 'Enter') create(); };
 }
+const SHELF = { 'Klassiker': '🕹️ Klassiker', 'Hjärngympa': '🧠 Hjärngympa', 'Tävling': '🏆 Tävlingar' };
+const shelfName = (o) => SHELF[o] || `🎮 ${o}s spel`;
 function viewHome() {
   const p = store.current;
   shell('home', `<h1>Hej ${esc(p.name)}! 👋</h1>
-    ${[...new Set(GAMES.map(g => g.owner))].map(o => `<h2>🎮 ${o}s spel</h2><div class="grid">${GAMES.filter(g => g.owner === o).map(gameCard).join('')}</div>`).join('')}
+    ${[...new Set(GAMES.map(g => g.owner))].map(o => `<h2>${o === 'Klassiker' ? '🕹️ Klassiker' : `🎮 ${o}s spel`}</h2><div class="grid">${GAMES.filter(g => g.owner === o).map(gameCard).join('')}</div>`).join('')}
     <h2>Dina rekord</h2>
     <div class="stats">
       <div class="stat"><b>${p.records.obby?.dist ? p.records.obby.dist + ' m' : '–'}</b><span>Hinderbanan, längst</span></div>
@@ -85,15 +99,15 @@ function viewGame(id) {
   shell('home', `<div class="game-hero">
     <div><div class="thumb" style="background:${g.bg}">${g.emoji}</div></div>
     <div>
-      <h1 style="margin-top:0">${g.title}</h1><div class="sub">${g.owner}s spel · 👍 ${g.rating}%</div>
+      <h1 style="margin-top:0">${g.title}</h1><div class="sub">${ownerLabel(g.owner)} · 👍 ${g.rating}%</div>
       <button class="btn green play" id="play">▶ Spela</button>
       <div class="stats">
-        <div class="stat"><b>${id === 'mystery' ? (r.wins ?? 0) : id === 'obby' ? (r.dist ? r.dist + ' m' : '–') : id === 'coins' ? (r.best ?? '–') : id === 'dash' ? Object.entries(r).filter(([k, x]) => !k.startsWith('egen') && x.wins).length + ' / 3' : Object.keys(store.current.world || {}).length}</b><span>${id === 'mystery' ? 'Vunna rundor' : id === 'obby' ? 'Längst' : id === 'coins' ? 'Flest mynt' : id === 'dash' ? 'Banor klarade' : 'Block'}</span></div>
-        <div class="stat"><b>${id === 'dash' ? Object.values(r).reduce((a, x) => a + (x.attempts || 0), 0) : id === 'obby' ? (r.checkpoints ?? 0) : id === 'mystery' ? (r.rounds ?? 0) : (r.wins ?? r.plays ?? 0)}</b><span>${id === 'mystery' ? 'Rundor spelade' : id === 'obby' ? 'Kontrollpunkter' : id === 'dash' ? 'Försök totalt' : 'Gånger spelad'}</span></div>
+        <div class="stat"><b>${g.vendorPath ? (r.best ? `${r.best} ${g.unit}` : '–') : id === 'city' ? (r.best ?? 0) : id === 'mystery' ? (r.wins ?? 0) : id === 'obby' ? (r.dist ? r.dist + ' m' : '–') : id === 'coins' ? (r.best ?? '–') : id === 'dash' ? Object.entries(r).filter(([k, x]) => !k.startsWith('egen') && x.wins).length + ' / 3' : Object.keys(store.current.world || {}).length}</b><span>${g.vendorPath ? 'Rekord här' : id === 'city' ? 'Flest invånare' : id === 'mystery' ? 'Vunna rundor' : id === 'obby' ? 'Längst' : id === 'coins' ? 'Flest mynt' : id === 'dash' ? 'Banor klarade' : 'Block'}</span></div>
+        <div class="stat"><b>${id === 'dash' ? Object.values(r).reduce((a, x) => a + (x.attempts || 0), 0) : id === 'obby' ? (r.checkpoints ?? 0) : id === 'city' ? (r.days ?? 0) : id === 'mystery' ? (r.rounds ?? 0) : (r.wins ?? r.plays ?? 0)}</b><span>${id === 'city' ? 'Dagar byggt' : id === 'mystery' ? 'Rundor spelade' : id === 'obby' ? 'Kontrollpunkter' : id === 'dash' ? 'Försök totalt' : 'Gånger spelad'}</span></div>
       </div>
     </div></div>
     <h2>Om spelet</h2><div class="desc">${g.desc}<ul>${g.tips.map(t => `<li>${t}</li>`).join('')}</ul>
-    <b>Så spelar du:</b> ${id === 'mystery' ? (isTouch ? 'Vänster sida: gå. Höger sida: titta. Hoppa-knappen hoppar. Den stora röda eller blå knappen hugger/skjuter om du är skurk eller sheriff.' : 'WASD: gå. Mus: titta. Mellanslag: hoppa. Klick eller F hugger/skjuter om du är skurk eller sheriff.') : id === 'dash' ? (isTouch ? 'Tryck var som helst på skärmen för att hoppa. Håll inne för att hoppa igen direkt. I skeppet: håll för att flyga upp, släpp för att dyka.' : 'Mellanslag, pil upp eller klick = hoppa. Håll inne för att hoppa igen direkt. I skeppet: håll för att flyga upp, släpp för att dyka.') : isTouch ? 'Vänster sida av skärmen: gå. Höger sida: titta runt. Knappen "Hoppa": hoppa, tryck igen i luften för dubbelhopp, och en tredje gång för att flyga i 10 sekunder.' : 'WASD eller piltangenter: gå. Mellanslag: hoppa, tryck igen i luften för dubbelhopp, och en tredje gång för att flyga i 10 sekunder. Dra med musen: titta runt.'}</div>`);
+    <b>Så spelar du:</b> ${g.how ? g.how : id === 'city' ? (isTouch ? 'Välj ett verktyg till höger och tryck på en ruta för att bygga. Dra på skärmen för att snurra kameran, dra nere till vänster för att flytta den. Plus och minus zoomar.' : 'Välj ett verktyg till höger och klicka på en ruta för att bygga. Dra med musen för att snurra kameran, WASD flyttar den, mushjulet zoomar.') : id === 'mystery' ? (isTouch ? 'Vänster sida: gå. Höger sida: titta. Hoppa-knappen hoppar. Den stora röda eller blå knappen hugger/skjuter om du är skurk eller sheriff.' : 'WASD: gå. Mus: titta. Mellanslag: hoppa. Klick eller F hugger/skjuter om du är skurk eller sheriff.') : id === 'dash' ? (isTouch ? 'Tryck var som helst på skärmen för att hoppa. Håll inne för att hoppa igen direkt. I skeppet: håll för att flyga upp, släpp för att dyka.' : 'Mellanslag, pil upp eller klick = hoppa. Håll inne för att hoppa igen direkt. I skeppet: håll för att flyga upp, släpp för att dyka.') : isTouch ? 'Vänster sida av skärmen: gå. Höger sida: titta runt. Knappen "Hoppa": hoppa, tryck igen i luften för dubbelhopp, och en tredje gång för att flyga i 10 sekunder.' : 'WASD eller piltangenter: gå. Mellanslag: hoppa, tryck igen i luften för dubbelhopp, och en tredje gång för att flyga i 10 sekunder. Dra med musen: titta runt.'}</div>`);
   app.querySelector('#play').onclick = () => play(g);
 }
 
@@ -165,7 +179,7 @@ async function play(g) {
   gameEl.hidden = false; hud.reset(); hud.center('<div class="small">Laddar…</div>');
   if (engine) { engine.dispose(); engine = null; }
   const mod = await g.load();
-  const ctx = { container, player: store.current, store, touch: isTouch, restart: () => play(g), exit: () => exitGame() };
+  const ctx = { container, game: g, player: store.current, store, touch: isTouch, restart: () => play(g), exit: () => exitGame() };
   engine = mod.start(ctx);
   document.getElementById('hud-exit').onclick = exitGame;
   try { if (isTouch && document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen(); } catch { /* ok */ }

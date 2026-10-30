@@ -161,3 +161,7 @@ h2 { font-size: 18px; margin: 26px 0 12px; }
   .preview { max-height: 46vh; aspect-ratio: auto; height: 46vh; }
   h1 { font-size: 24px; }
 }
+/* Klassiker: öppna spel i en iframe under HUD-raden */
+.classic-frame { --hud-h: calc(46px + env(safe-area-inset-top)); position: absolute; left: 0; top: var(--hud-h); width: 100%; height: calc(100% - var(--hud-h)); border: 0; background: #000; pointer-events: auto; touch-action: auto; display: block; }
+#game.classic { touch-action: manipulation; }
+#game.classic #game-canvas { top: 0; }
