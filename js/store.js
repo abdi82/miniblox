@@ -43,6 +43,7 @@ export const store = {
   logout() { state.currentId = null; save(); },
   removePlayer(id) { state.players = state.players.filter(p => p.id !== id); if (state.currentId === id) state.currentId = null; save(); },
   update(fn) { const p = this.current; if (!p) return; fn(p); save(); },
+  updatePlayer(id, fn) { const p = state.players.find(x => x.id === id); if (!p) return; fn(p); save(); },
   addCoins(n) { this.update(p => { p.coins = Math.max(0, Math.round(p.coins + n)); }); },
   record(gameId, key, value, better = (a, b) => a > b) {
     let isNew = false;

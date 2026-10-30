@@ -32,7 +32,9 @@ const app = document.getElementById('app');
 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
 const esc = (s) => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-const ownerLabel = (o) => o === 'Klassiker' ? 'Klassiker' : `${o}s spel`;
+const SHELF = { 'Klassiker': '🕹️ Klassiker', 'Hjärngympa': '🧠 Hjärngympa', 'Tävling': '🏆 Tävlingar' };
+const shelfName = (o) => SHELF[o] || `🎮 ${o}s spel`;
+const ownerLabel = (o) => SHELF[o] ? SHELF[o].slice(SHELF[o].indexOf(' ') + 1) : `${o}s spel`;
 const faceEmoji = (p) => FACES.find(f => f.id === p.avatar.face)?.emoji || '🙂';
 function toast(msg) { const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 2500); }
 
@@ -79,12 +81,10 @@ function viewPlayers() {
   const create = () => { const n = name.value.trim(); if (!n) return name.focus(); store.addPlayer(n); location.hash = '#/avatar'; };
   app.querySelector('#new-ok').onclick = create; name.onkeydown = (e) => { if (e.key === 'Enter') create(); };
 }
-const SHELF = { 'Klassiker': '🕹️ Klassiker', 'Hjärngympa': '🧠 Hjärngympa', 'Tävling': '🏆 Tävlingar' };
-const shelfName = (o) => SHELF[o] || `🎮 ${o}s spel`;
 function viewHome() {
   const p = store.current;
   shell('home', `<h1>Hej ${esc(p.name)}! 👋</h1>
-    ${[...new Set(GAMES.map(g => g.owner))].map(o => `<h2>${o === 'Klassiker' ? '🕹️ Klassiker' : `🎮 ${o}s spel`}</h2><div class="grid">${GAMES.filter(g => g.owner === o).map(gameCard).join('')}</div>`).join('')}
+    ${[...new Set(GAMES.map(g => g.owner))].map(o => `<h2>${shelfName(o)}</h2><div class="grid">${GAMES.filter(g => g.owner === o).map(gameCard).join('')}</div>`).join('')}
     <h2>Dina rekord</h2>
     <div class="stats">
       <div class="stat"><b>${p.records.obby?.dist ? p.records.obby.dist + ' m' : '–'}</b><span>Hinderbanan, längst</span></div>
