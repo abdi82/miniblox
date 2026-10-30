@@ -6,14 +6,16 @@ import { hud, isTouch } from './engine.js';
 import { checkForUpdate, VERSION } from './update.js';
 
 const GAMES = [
-  { id: 'obby', title: 'Hinderbanan', emoji: '🏃', bg: 'linear-gradient(135deg,#ff9a3c,#ff3c6e)', rating: 96, desc: 'En bana som aldrig tar slut! Hoppa mellan plattformar, akta dig för lavan och kom så långt du kan. Det blir svårare ju längre du kommer. Gröna plattformar är kontrollpunkter och ger mynt. Välj vilket djur du vill vara!',
+  { id: 'obby', owner: 'Yakob', title: 'Hinderbanan', emoji: '🏃', bg: 'linear-gradient(135deg,#ff9a3c,#ff3c6e)', rating: 96, desc: 'En bana som aldrig tar slut! Hoppa mellan plattformar, akta dig för lavan och kom så långt du kan. Det blir svårare ju längre du kommer. Gröna plattformar är kontrollpunkter och ger mynt. Välj vilket djur du vill vara!',
     tips: ['Välj djur: groda hoppar högt, gepard springer fort, örn flyger länge, kanin hoppar tre gånger, sköldpadda tål lava', 'Dubbelhopp: tryck hoppa en gång till i luften', 'Trippelhopp: tryck en tredje gång så flyger du i 10 sekunder (nedräkning uppe till vänster)', 'Varje kontrollpunkt ger 2 mynt, var tionde ger 10 extra', 'Rekordet räknas i meter'], load: () => import('./games/obby.js') },
-  { id: 'coins', title: 'Myntjakten', emoji: '🪙', bg: 'linear-gradient(135deg,#ffd200,#f7971e)', rating: 94, desc: 'Samla så många mynt du hinner på 60 sekunder. Mynten finns på marken, på lådor och högst upp i tornen. Varje mynt du samlar blir dina!',
+  { id: 'coins', owner: 'Yakob', title: 'Myntjakten', emoji: '🪙', bg: 'linear-gradient(135deg,#ffd200,#f7971e)', rating: 94, desc: 'Samla så många mynt du hinner på 60 sekunder. Mynten finns på marken, på lådor och högst upp i tornen. Varje mynt du samlar blir dina!',
     tips: ['Alla mynt = 25 bonusmynt', 'Tornen har två mynt på toppen'], load: () => import('./games/coins.js') },
-  { id: 'build', title: 'Bygg din värld', emoji: '🧱', bg: 'linear-gradient(135deg,#43e97b,#38f9d7)', rating: 98, desc: 'Bygg vad du vill med färgade block: hus, torn, labyrinter. Din värld sparas, så du kan fortsätta nästa gång. Tryck "Spela i världen" för att gå runt i det du byggt!',
+  { id: 'build', owner: 'Zaki', title: 'Bygg din värld', emoji: '🧱', bg: 'linear-gradient(135deg,#43e97b,#38f9d7)', rating: 98, desc: 'Bygg vad du vill med färgade block: hus, torn, labyrinter. Din värld sparas, så du kan fortsätta nästa gång. Tryck "Spela i världen" för att gå runt i det du byggt!',
     tips: ['Högerklick tar bort block', 'Du kan hoppa upp på ett block i taget'], load: () => import('./games/build.js') },
-  { id: 'dash', title: 'Kubdash', emoji: '🟦', bg: 'linear-gradient(135deg,#1a0b3a,#2bd4ff)', rating: 97, desc: 'Kuben springer själv till musiken. Tryck för att hoppa över spikar och block. Nuddar du något börjar du om från början! Tre banor: Lätt, Normal och Svår, med hopp-orbs, studsplattor, skeppsflygning och gravitation som vänds upp och ner. Hitta de hemliga mynten. Rita egna banor i banredigeraren!',
+  { id: 'dash', owner: 'Zaki', title: 'Kubdash', emoji: '🟦', bg: 'linear-gradient(135deg,#1a0b3a,#2bd4ff)', rating: 97, desc: 'Kuben springer själv till musiken. Tryck för att hoppa över spikar och block. Nuddar du något börjar du om från början! Tre banor: Lätt, Normal och Svår, med hopp-orbs, studsplattor, skeppsflygning och gravitation som vänds upp och ner. Hitta de hemliga mynten. Rita egna banor i banredigeraren!',
     tips: ['Håll inne knappen så hoppar du igen direkt när du landar', 'Övningsläge: börja om från senaste gröna flaggan i stället för från början', 'Rita egna banor: tryck på Egna banor i banvalet'], load: () => import('./games/dash.js') },
+  { id: 'mystery', owner: 'Noah', title: 'Noahs Murder Mysteri', emoji: '🔪', bg: 'linear-gradient(135deg,#2b2d42,#e53935)', rating: 95, desc: 'Åtta figurer i en herrgård. En är skurk med kniv, en är sheriff med pistol, resten är oskyldiga. Vem är vem? Oskyldiga: spring, göm dig och samla mynt. Sheriff: hitta skurken och skjut. Skurk: ta alla innan tiden går ut! Du spelar mot sju datorstyrda figurer, rollerna lottas varje runda.',
+    tips: ['Skurken avslöjas om någon ser honom ta någon', 'Om sheriffen åker ut ligger pistolen kvar på golvet, plocka upp den och bli hjälte!', 'Sheriff: sikta med kameran mot skurken och tryck Skjut. Skjuter du en oskyldig åker du ut själv'], load: () => import('./games/mystery.js') },
 ];
 const app = document.getElementById('app');
 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
@@ -28,7 +30,7 @@ function shell(active, content) {
   const nav = [['home', '🏠', 'Hem'], ['avatar', '🧍', 'Avatar'], ['shop', '🛍️', 'Butik'], ['players', '👥', 'Byt spelare']];
   app.innerHTML = `
     <header class="topbar">
-      <a href="#/" class="logo"><span class="cube"></span>MiniBlox</a>
+      <a href="#/" class="logo"><span class="cube"></span>Mina Boys Games</a>
       <nav>${nav.slice(0, 3).map(([id, , l]) => `<a href="#/${id === 'home' ? '' : id}" class="${active === id ? 'active' : ''}">${l}</a>`).join('')}</nav>
       <div class="spacer"></div>
       <div class="coins"><span class="coin-icon"></span>${p.coins}</div>
@@ -42,20 +44,20 @@ function shell(active, content) {
 function gameCard(g) {
   const r = store.current.records[g.id] || {};
   const dashBest = g.id === 'dash' ? Math.max(0, ...Object.values(r).map(x => x.best || 0)) : 0;
-  const meta = g.id === 'obby' && r.dist ? `Rekord ${r.dist} m` : g.id === 'coins' && r.best ? `Rekord ${r.best} mynt` : g.id === 'build' ? `${Object.keys(store.current.world || {}).length} block byggda` : g.id === 'dash' && dashBest ? `Bäst ${dashBest} %` : 'Inte spelat än';
-  return `<a class="card" href="#/game/${g.id}"><div class="thumb" style="background:${g.bg}">${g.emoji}</div><div class="title">${g.title}</div><div class="meta">👍 ${g.rating}% · ${meta}</div></a>`;
+  const meta = g.id === 'obby' && r.dist ? `Rekord ${r.dist} m` : g.id === 'coins' && r.best ? `Rekord ${r.best} mynt` : g.id === 'build' ? `${Object.keys(store.current.world || {}).length} block byggda` : g.id === 'dash' && dashBest ? `Bäst ${dashBest} %` : g.id === 'mystery' && r.rounds ? `${r.wins || 0} vunna av ${r.rounds}` : 'Inte spelat än';
+  return `<a class="card" href="#/game/${g.id}"><div class="thumb" style="background:${g.bg}">${g.emoji}</div><div class="title">${g.title}</div><div class="meta">${g.owner}s spel · 👍 ${g.rating}% · ${meta}</div></a>`;
 }
 
 // ---------- Vyer ----------
 function viewPlayers() {
   app.innerHTML = `<div class="center">
-    <div class="logo" style="justify-content:center;font-size:34px"><span class="cube" style="width:32px;height:32px"></span>MiniBlox</div>
+    <div class="logo" style="justify-content:center;font-size:34px"><span class="cube" style="width:32px;height:32px"></span>Mina Boys Games</div>
     <h1>Vem spelar?</h1>
     <div class="players">
       ${store.players.map(p => `<button class="player-card" data-id="${p.id}"><span class="face" style="background:${p.avatar.skin}">${faceEmoji(p)}</span>${esc(p.name)}<div class="sub" style="font-size:12px;font-weight:600"><span class="coin-icon" style="width:11px;height:11px"></span> ${p.coins}</div></button>`).join('')}
       <button class="player-card new" id="new-player"><span class="face" style="background:#eee">＋</span>Ny spelare</button>
     </div>
-    ${isIOS && !standalone ? `<p class="sub tip">📱 Tips för iPad: tryck på <b>Dela</b> <span style="font-size:16px">⎋</span> i Safari och välj <b>Lägg till på hemskärmen</b>. Då öppnas MiniBlox i helskärm som en app.</p>` : ''}
+    ${isIOS && !standalone ? `<p class="sub tip">📱 Tips för iPad: tryck på <b>Dela</b> <span style="font-size:16px">⎋</span> i Safari och välj <b>Lägg till på hemskärmen</b>. Då öppnas Mina Boys Games i helskärm som en app.</p>` : ''}
     <p class="sub" style="font-size:11px;margin-top:30px">Version ${VERSION}</p>
     <div id="new-form" hidden><input class="input" id="new-name" maxlength="14" placeholder="Vad heter du?" autocomplete="off" /><div style="margin-top:12px"><button class="btn green" id="new-ok">Börja spela</button></div></div>
   </div>`;
@@ -68,7 +70,7 @@ function viewPlayers() {
 function viewHome() {
   const p = store.current;
   shell('home', `<h1>Hej ${esc(p.name)}! 👋</h1>
-    <h2>Rekommenderat för dig</h2><div class="grid">${GAMES.map(gameCard).join('')}</div>
+    ${[...new Set(GAMES.map(g => g.owner))].map(o => `<h2>🎮 ${o}s spel</h2><div class="grid">${GAMES.filter(g => g.owner === o).map(gameCard).join('')}</div>`).join('')}
     <h2>Dina rekord</h2>
     <div class="stats">
       <div class="stat"><b>${p.records.obby?.dist ? p.records.obby.dist + ' m' : '–'}</b><span>Hinderbanan, längst</span></div>
@@ -83,15 +85,15 @@ function viewGame(id) {
   shell('home', `<div class="game-hero">
     <div><div class="thumb" style="background:${g.bg}">${g.emoji}</div></div>
     <div>
-      <h1 style="margin-top:0">${g.title}</h1><div class="sub">Av MiniBlox · 👍 ${g.rating}%</div>
+      <h1 style="margin-top:0">${g.title}</h1><div class="sub">${g.owner}s spel · 👍 ${g.rating}%</div>
       <button class="btn green play" id="play">▶ Spela</button>
       <div class="stats">
-        <div class="stat"><b>${id === 'obby' ? (r.dist ? r.dist + ' m' : '–') : id === 'coins' ? (r.best ?? '–') : id === 'dash' ? Object.entries(r).filter(([k, x]) => !k.startsWith('egen') && x.wins).length + ' / 3' : Object.keys(store.current.world || {}).length}</b><span>${id === 'obby' ? 'Längst' : id === 'coins' ? 'Flest mynt' : id === 'dash' ? 'Banor klarade' : 'Block'}</span></div>
-        <div class="stat"><b>${id === 'dash' ? Object.values(r).reduce((a, x) => a + (x.attempts || 0), 0) : id === 'obby' ? (r.checkpoints ?? 0) : (r.wins ?? r.plays ?? 0)}</b><span>${id === 'obby' ? 'Kontrollpunkter' : id === 'dash' ? 'Försök totalt' : 'Gånger spelad'}</span></div>
+        <div class="stat"><b>${id === 'mystery' ? (r.wins ?? 0) : id === 'obby' ? (r.dist ? r.dist + ' m' : '–') : id === 'coins' ? (r.best ?? '–') : id === 'dash' ? Object.entries(r).filter(([k, x]) => !k.startsWith('egen') && x.wins).length + ' / 3' : Object.keys(store.current.world || {}).length}</b><span>${id === 'mystery' ? 'Vunna rundor' : id === 'obby' ? 'Längst' : id === 'coins' ? 'Flest mynt' : id === 'dash' ? 'Banor klarade' : 'Block'}</span></div>
+        <div class="stat"><b>${id === 'dash' ? Object.values(r).reduce((a, x) => a + (x.attempts || 0), 0) : id === 'obby' ? (r.checkpoints ?? 0) : id === 'mystery' ? (r.rounds ?? 0) : (r.wins ?? r.plays ?? 0)}</b><span>${id === 'mystery' ? 'Rundor spelade' : id === 'obby' ? 'Kontrollpunkter' : id === 'dash' ? 'Försök totalt' : 'Gånger spelad'}</span></div>
       </div>
     </div></div>
     <h2>Om spelet</h2><div class="desc">${g.desc}<ul>${g.tips.map(t => `<li>${t}</li>`).join('')}</ul>
-    <b>Så spelar du:</b> ${id === 'dash' ? (isTouch ? 'Tryck var som helst på skärmen för att hoppa. Håll inne för att hoppa igen direkt. I skeppet: håll för att flyga upp, släpp för att dyka.' : 'Mellanslag, pil upp eller klick = hoppa. Håll inne för att hoppa igen direkt. I skeppet: håll för att flyga upp, släpp för att dyka.') : isTouch ? 'Vänster sida av skärmen: gå. Höger sida: titta runt. Knappen "Hoppa": hoppa, tryck igen i luften för dubbelhopp, och en tredje gång för att flyga i 10 sekunder.' : 'WASD eller piltangenter: gå. Mellanslag: hoppa, tryck igen i luften för dubbelhopp, och en tredje gång för att flyga i 10 sekunder. Dra med musen: titta runt.'}</div>`);
+    <b>Så spelar du:</b> ${id === 'mystery' ? (isTouch ? 'Vänster sida: gå. Höger sida: titta. Hoppa-knappen hoppar. Den stora röda eller blå knappen hugger/skjuter om du är skurk eller sheriff.' : 'WASD: gå. Mus: titta. Mellanslag: hoppa. Klick eller F hugger/skjuter om du är skurk eller sheriff.') : id === 'dash' ? (isTouch ? 'Tryck var som helst på skärmen för att hoppa. Håll inne för att hoppa igen direkt. I skeppet: håll för att flyga upp, släpp för att dyka.' : 'Mellanslag, pil upp eller klick = hoppa. Håll inne för att hoppa igen direkt. I skeppet: håll för att flyga upp, släpp för att dyka.') : isTouch ? 'Vänster sida av skärmen: gå. Höger sida: titta runt. Knappen "Hoppa": hoppa, tryck igen i luften för dubbelhopp, och en tredje gång för att flyga i 10 sekunder.' : 'WASD eller piltangenter: gå. Mellanslag: hoppa, tryck igen i luften för dubbelhopp, och en tredje gång för att flyga i 10 sekunder. Dra med musen: titta runt.'}</div>`);
   app.querySelector('#play').onclick = () => play(g);
 }
 

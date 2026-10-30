@@ -1,8 +1,8 @@
 // Automatisk uppdatering: när spelet öppnas jämförs versionen med version.txt på servern.
 // Är den nyare hämtas alla filer om (förbi cachen) och sidan laddas om en gång. Då får iPads nya versionen direkt.
-export const VERSION = '2026-10-27.1142';
+export const VERSION = '2026-10-30.2240';
 const FILES = ['./', 'index.html', 'css/style.css', 'js/app.js', 'js/update.js', 'js/engine.js', 'js/avatar.js', 'js/store.js',
-  'js/games/obby.js', 'js/games/coins.js', 'js/games/build.js', 'js/games/dash.js', 'js/games/dash-levels.js', 'js/games/dash-editor.js'];
+  'js/games/obby.js', 'js/games/coins.js', 'js/games/build.js', 'js/games/dash.js', 'js/games/dash-levels.js', 'js/games/dash-editor.js', 'js/games/mystery.js'];
 
 export async function checkForUpdate(onUpdating) {
   try {

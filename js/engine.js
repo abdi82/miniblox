@@ -321,6 +321,13 @@ export class Engine {
     const { yaw, pitch, dist } = this.cam;
     const off = new THREE.Vector3(Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch)).multiplyScalar(dist);
     const desired = target.clone().add(off);
+    if (this.camCollide) { // dra in kameran om en vägg är i vägen
+      const dir = desired.clone().sub(target); const len = dir.length(); dir.normalize(); let d = len;
+      for (let st = 0.8; st < len; st += 0.4) { const pt = target.clone().addScaledVector(dir, st);
+        if (this.boxes.some(b => b.type === 'solid' && b.h >= 2 && pt.x > b.min.x && pt.x < b.max.x && pt.y > b.min.y && pt.y < b.max.y && pt.z > b.min.z && pt.z < b.max.z)) { d = Math.max(1.2, st - 0.6); break; } }
+      desired.copy(target).addScaledVector(dir, d);
+      if (d < len - 0.01) { this.camera.position.copy(desired); this.camera.lookAt(target); this._camInit = true; if (this.sun && this.player) { this.sun.position.set(t.x + 30, t.y + 60, t.z + 20); this.sun.target.position.copy(t); } return; }
+    }
     if (!this._camInit) { this.camera.position.copy(desired); this._camInit = true; }
     else this.camera.position.lerp(desired, Math.min(1, dt * 12));
     this.camera.lookAt(target);

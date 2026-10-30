@@ -1,6 +1,6 @@
-# MiniBlox
+# Mina Boys Games
 
-En mini-version av Roblox för barnen. Ren webbsida (HTML + JavaScript + Three.js), ingen server, inga konton.
+Yakobs, Zakis och Noahs egna spel: en mini-version av Roblox. Ren webbsida (HTML + JavaScript + Three.js), ingen server, inga konton.
 Allt sparas i webbläsaren på den enhet man spelar på.
 
 ## Starta
@@ -9,7 +9,7 @@ Allt sparas i webbläsaren på den enhet man spelar på.
 python3 -m http.server 5173
 ```
 
-Öppna http://localhost:5173 (eller datorns IP-adress från iPaden på samma wifi).
+Öppna http://localhost:5173 (live: https://abdi82.github.io/miniblox/) (eller datorns IP-adress från iPaden på samma wifi).
 
 ## Innehåll
 

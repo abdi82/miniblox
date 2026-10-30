@@ -1,7 +1,7 @@
 {
-  "name": "MiniBlox",
-  "short_name": "MiniBlox",
-  "description": "En mini-Roblox för barnen",
+  "name": "Mina Boys Games",
+  "short_name": "Mina Boys",
+  "description": "Mina Boys Games: Yakobs, Zakis och Noahs egna spel",
   "start_url": "./",
   "scope": "./",
   "display": "fullscreen",
