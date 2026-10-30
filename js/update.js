@@ -1,10 +1,10 @@
 // Automatisk uppdatering: när spelet öppnas jämförs versionen med version.txt på servern.
 // Är den nyare hämtas alla filer om (förbi cachen) och sidan laddas om en gång. Då får iPads nya versionen direkt.
-export const VERSION = '2026-10-30.2306';
+export const VERSION = '2026-10-30.2313';
 const FILES = ['./', 'index.html', 'css/style.css', 'js/app.js', 'js/update.js', 'js/engine.js', 'js/avatar.js', 'js/store.js',
   'js/games/obby.js', 'js/games/coins.js', 'js/games/build.js', 'js/games/dash.js', 'js/games/dash-levels.js', 'js/games/dash-editor.js', 'js/games/mystery.js', 'js/games/city.js', 'js/games/classic.js',
   'js/games/quiz.js', 'js/games/quiz-data.js', 'js/games/blockly.js', 'js/games/chess.js', 'js/games/chess-ai.js',
-  'js/games/sokoban.js', 'js/games/sokoban-levels.js', 'js/games/robot.js', 'js/games/robot-levels.js', 'js/games/sudoku.js'];
+  'js/games/sokoban.js', 'js/games/sokoban-levels.js', 'js/games/robot.js', 'js/games/robot-levels.js', 'js/games/sudoku.js', 'js/games/mines.js', 'js/games/pipes.js'];
 
 export async function checkForUpdate(onUpdating) {
   try {
